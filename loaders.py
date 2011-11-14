@@ -106,7 +106,7 @@ class PyYamlAdapter(YamlReader):
 		return PyYamlAdapter.__instance
 
 	def __init__(self):
-		pass
+		YamlReader.__init__(self)
 	
 	def loads(self, string):
 		""" 

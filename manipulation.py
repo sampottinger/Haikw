@@ -7,6 +7,7 @@ Module containing classes related to the manipulation of objects in the target i
 @organization: Andrews Robotics Initiative at CU Boulder
 """
 import os
+import configurable
 import loaders
 
 class ObjectManipulationFactory:
@@ -85,7 +86,12 @@ class ObjectManipulationFactory:
 		sizes = self.__read_from_yaml_file(sizes_yaml_location)
 		positions = self.__read_from_yaml_file(default_positions_yaml_file)
 
-		#return ObjectManipulationFacade()
+		# Create strategies
+		color_strategy = configurable.MappedColorResolutionFactory(colors)
+		size_strategy = configurable.MappedNamedSizeResolverFactory(sizes)
+		position_strategy = configurable.ObjectPositionFactoryConstructor(positions)
+
+		return ObjectManipulationFacade(creation_strategy, color_strategy, size_strategy, position_strategy)
 
 	def __read_from_yaml_file(self, target):
 		"""
