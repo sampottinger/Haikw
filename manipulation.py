@@ -264,11 +264,14 @@ class ObjectManipulationFactory:
 		positions = self.__read_from_yaml_file(default_positions_yaml_file)
 
 		# Create strategies
-		color_strategy = configurable.MappedColorResolutionFactory(colors)
-		size_strategy = configurable.MappedNamedSizeResolverFactory(sizes)
-		position_strategy = configurable.ObjectPositionFactoryConstructor(positions)
+		color_strategy = configurable.MappedColorResolutionFactory.get_instance().create_strategy(colors)
+		size_strategy = configurable.MappedNamedSizeResolverFactory.get_instance().create_resolver(sizes)
+		position_strategy = configurable.ObjectPositionFactoryConstructor.get_instance().create_factory(positions)
+		
+		# Create builder
+		builder = virtualobject.VirtualObjectBuilder(construction_strategy, size_strategy_color_strategy)
 
-		return ObjectManipulationFacade(creation_strategy, manipulation_strategy, color_strategy, size_strategy, position_strategy)
+		return ObjectManipulationFacade(builder, manipulation_strategy, color_strategy, size_strategy, position_strategy)
 
 	def __read_from_yaml_file(self, target):
 		"""
@@ -293,12 +296,12 @@ class ObjectManipulationFacade:
 	@note: Should not be created directly. Use an ObjectManipulationFactory to construct.
 	"""
 
-	def __init__(self, creation_strategy, manipulation_strategy, color_resolution_strategy, named_size_resolver, object_position_factory):
+	def __init__(self, object_builder, manipulation_strategy, color_resolution_strategy, named_size_resolver, object_position_factory):
 		"""
 		Constructor for ObjectManipulationFacade
 
-		@param creation_strategy: The strategy to use to create new package-specific objects
-		@type creation_strategy: VirtualObjectBuilder
+		@param object_builder: The strategy to use to create new package-specific objects
+		@type object_builder: VirtualObjectBuilder
 		@param manipulation_strategy: The strategy to use to actually move objects within the package
 		@type manipulation_strategy: VirtualObjectManipulationStrategy
 		@param color_resolution_strategy: The strategy to resolve colors for names
@@ -309,10 +312,59 @@ class ObjectManipulationFacade:
 		@type object_position_factory: ObjectPositionFactory
 		"""
 
-		self.__creation_strategy = creation_strategy
+		self.__object_builder = object_builder
 		self.__manipulation_strategy = manipulation_strategy
 		self.__color_resolution_strategy = color_resolution_strategy
 		self.__named_size_resolver = named_size_resolver
 		self.__object_position_factory = object_position_factory
+		self.__descriptor_set = False
 	
+	def set_new_descriptor(self, descriptor):
+		"""
+		Sets the descriptor of the next object and following objects to be created
+
+		@param new_descriptor: The descriptor to give to the next object and following objects to be created
+		@type new_descriptor: String
+		"""
+
+		self.__object_builder.set_descriptor(descriptor)
+		self.__descriptor_set = True
 	
+	def set_new_color(self, color):
+		"""
+		Sets the color of the next object and following objects to be created
+
+		@param new_color: The color to give to the next object and following objects to be created
+		@type new_color: String
+		"""
+
+		self.__object_builder.set_color(color)
+	
+	def set_new_size(self, size):
+		"""
+		Sets the size of the next object and following objects to be created
+
+		@param new_size: The size to give to the next object and following objects to be created
+		@type new_size: VirtualObjectSize
+		"""
+
+		self.__object_builder.set_size(size)
+	
+	def set_new_size_by_name(self, name):
+		"""
+		Sets the size of the next object and following objects to be created
+
+		Sets the size of the next object and following objects to be created based off of the name of the object to be created and its descriptor
+
+		@param name: The name of the size to resolve
+		@type name: String
+		@raise ValueError: If descriptor has not been set, will raise exception
+		"""
+		if not self.__descriptor_set:
+			raise ValueError("Please set a descriptor before providing a named size")
+		
+		size = self.__named_size_resolver.get_size(name)
+
+		self.set_new_size(size)
+	
+	def create()

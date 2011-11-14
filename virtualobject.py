@@ -353,10 +353,10 @@ class VirtualObjectBuilder:
 			raise AttributeError("Name has not been set. Please call set_name and try again.")
 
 		# resolve color
-		color = self.__color_resolution_strategy(self.__color)
+		color = self.__color_resolution_strategy.get_color(self.__color)
 
 		# resolve size
-		size = self.__named_size_resolver(self.__size)
+		size = self.__named_size_resolver.get_size(self.__size)
 
 		# Create and return new object
 		return self.__construction_strategy.create_object(self.__name, self.__descriptor, color, size)
