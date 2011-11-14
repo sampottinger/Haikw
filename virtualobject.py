@@ -75,13 +75,18 @@ class VirtualObjectConstructionStrategy:
 	@note: It's a bit un-pythonic to do this but, given long term extendability concerns, this option was taken
 	"""
 
-	def create_object(self, descriptor, color, size):
+	def create_object(self, name, descriptor, color, size):
 		"""
 		Creates a new object with the given properties
 
+		@param name: Identifying name for this new object
+		@type name: String
 		@param descriptor: Simple description of the object to make
 		@type descriptor: String
-		@param color: VirtualObjectColor
+		@param color: Color to make the next objects with
+		@type color: VirtualObjectColor
+		@param size: The size to assign to the next objects to make
+		@type size: VirtualObjectSize
 		"""
 
 		raise NotImplementedError("Must use subclass / implementor of this interface")
@@ -346,7 +351,7 @@ class VirtualObjectBuilder:
 
 		if self.__name == VirtualObjectBuilder.NOT_SPECIFIED:
 			raise AttributeError("Name has not been set. Please call set_name and try again.")
-		
+
 		# resolve color
 		color = self.__color_resolution_strategy(self.__color)
 
@@ -354,5 +359,5 @@ class VirtualObjectBuilder:
 		size = self.__named_size_resolver(self.__size)
 
 		# Create and return new object
-		return self.__construction_strategy.create_object(descriptor, color, size)
+		return self.__construction_strategy.create_object(self.__name, self.__descriptor, color, size)
 		

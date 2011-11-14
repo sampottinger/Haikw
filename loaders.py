@@ -7,7 +7,39 @@ Module for loading configuration settings
 @organization: Andrews Robotics Initiative at CU Boulder
 """
 
+import os
 import yaml
+
+class PathFixer:
+	"""
+	Simple singleton that changes the forward slash to the os seperator appropriate to the current platform
+	"""
+
+	__instance = None
+
+	@classmethod
+	def get_instance(self):
+		"""
+		Returns a shared instance of YamlReaderFactory, creating it if necessary
+
+		@return: Shared instance of this singleton
+		@rtype: ObjectManipulationFactory
+		"""
+		if not PathFixer.__instance:
+			PathFixer.__instance = PathFixer()
+		
+		return PathFixer.__instance
+	
+	def fix(self, path):
+		"""
+		Changes a unix style path to a path compatable with the current operating system
+
+		@param path: The path to change
+		@type path: String
+		@return: New os specific path
+		@rtype: String
+		"""
+		return path.replace("/", os.sep)
 
 class YamlReaderFactory:
 	"""
