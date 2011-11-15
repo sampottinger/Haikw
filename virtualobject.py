@@ -9,6 +9,78 @@ This module provides management for objects simulated in the target inverse kine
 @organization: Andrews Robotics Initiative at CU Boulder
 """
 
+class VirtualObject:
+	"""
+	Simple temporary immutable state of a simulated object
+	"""
+
+	def __init__(self, name, position, descriptor, color, size):
+		"""
+		Constructor for a VirtualObject
+
+		@param name: Unique name for this virtual object
+		@type name: String
+		@param position: The current position for this VirtualObject
+		@type position: ObjectPosition
+		@param descriptor: The descriptor used to create this VirtualObject
+		@type descriptor: String
+		@param color: The color of this VirtualObject as it was created
+		@type color: VirtualObjectColor
+		@param size: The size of this VirtualObject as it was created
+		@type size: VirtualObjectSize
+		"""
+		self.__name = name
+		self.__position = position
+		self.__descriptor = descriptor
+		self.__color = color
+		self.__size = size
+	
+	def get_name(self):
+		"""
+		Determine the unqiue name for this object
+
+		@return: The name of this object
+		@rtype: String
+		"""
+		return self.__name
+	
+	def get_position(self):
+		"""
+		Determine the position of this object at checking with the simulation when creating this state
+
+		@return: Position as of this state's creation
+		@rtype: ObjectPosition
+		@note: This is not kept up to date. To find the latest position, use an ObjectManipulationFacade
+		"""
+		return self.__position
+	
+	def get_descriptor(self):
+		"""
+		Determine the descriptor used to create this virtual object
+
+		@return: Original descriptor used to create this object
+		@rtype: String
+		"""
+		return self.__descriptor
+	
+	def get_color(self):
+		"""
+		Determine the color used to create this virtual object
+
+		@return: Original color used to create this object
+		@rtype: VirtualObjectColor
+		"""
+		return self.__color
+	
+	def get_size(self):
+		"""
+		Determine the size used to create this virtual object
+
+		@return: Original size used to create this object
+		@rtype: VirtualObjectSize
+		"""
+		return self.__size
+
 class VirtualObjectColor:
 	"""
 	Simple structure for RBG colors
@@ -286,17 +358,6 @@ class VirtualObjectBuilder:
 		self.__descriptor = VirtualObjectBuilder.NOT_SPECIFIED
 		self.__color = VirtualObjectBuilder.NOT_SPECIFIED
 		self.__size = VirtualObjectBuilder.NOT_SPECIFIED
-		self.__name = VirtualObjectBuilder.NOT_SPECIFIED
-	
-	def set_name(self, new_name):
-		"""
-		Sets the name of the next object and following objects to be created
-
-		@param new_name: The name to give to the next object and following objects to be created
-		@type new_name: String
-		"""
-
-		self.__name = new_name
 	
 	def set_descriptor(self, new_descriptor):
 		"""
@@ -328,10 +389,12 @@ class VirtualObjectBuilder:
 
 		self.__size = new_size
 	
-	def create(self, position):
+	def create(self, name, position):
 		"""
 		Creates a new object at the given position
 
+		@param name: The name to assign this object
+		@type name: String
 		@param position: The position to give this new object
 		@type position: ObjectPosition
 		@return: A new virtual object
@@ -349,9 +412,6 @@ class VirtualObjectBuilder:
 		if self.__size == VirtualObjectBuilder.NOT_SPECIFIED:
 			raise AttributeError("Size has not been set. Please call set_size and try again.")
 
-		if self.__name == VirtualObjectBuilder.NOT_SPECIFIED:
-			raise AttributeError("Name has not been set. Please call set_name and try again.")
-
 		# resolve color
 		color = self.__color_resolution_strategy.get_color(self.__color)
 
@@ -359,5 +419,5 @@ class VirtualObjectBuilder:
 		size = self.__named_size_resolver.get_size(self.__size)
 
 		# Create and return new object
-		return self.__construction_strategy.create_object(self.__name, self.__descriptor, color, size)
+		return self.__construction_strategy.create_object(name, self.__descriptor, color, size)
 		

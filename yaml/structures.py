@@ -26,5 +26,16 @@ class DictionarySet:
 	def __delitem__(self, key):
 		del self.__internal_dict[key]
 	
+	def __contains__(self, item):
+		return item in self.__internal_dict
+	
 	def keys(self):
 		return self.__internal_dict.keys()
+	
+	def vals(self):
+		ret_val = []
+
+		for key in self.keys():
+			ret_val.append(self[key])
+		
+		return ret_val

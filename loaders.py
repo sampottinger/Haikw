@@ -20,10 +20,10 @@ class PathFixer:
 	@classmethod
 	def get_instance(self):
 		"""
-		Returns a shared instance of YamlReaderFactory, creating it if necessary
+		Returns a shared instance of PathFixer, creating it if necessary
 
 		@return: Shared instance of this singleton
-		@rtype: ObjectManipulationFactory
+		@rtype: PathFixer
 		"""
 		if not PathFixer.__instance:
 			PathFixer.__instance = PathFixer()
@@ -54,7 +54,7 @@ class YamlReaderFactory:
 		Returns a shared instance of YamlReaderFactory, creating it if necessary
 
 		@return: Shared instance of this singleton
-		@rtype: ObjectManipulationFactory
+		@rtype: YamlReaderFactory
 		"""
 		if not YamlReaderFactory.__instance:
 			YamlReaderFactory.__instance = YamlReaderFactory()

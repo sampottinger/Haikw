@@ -10,6 +10,7 @@ import os
 import imp
 import configurable
 import loaders
+import structures
 
 class PackageManager:
 	"""
@@ -287,6 +288,17 @@ class ObjectManipulationFactory:
 class VirtualObjectManipulationStrategy:
 	pass
 
+	def update(self, target):
+		pass
+	
+	def grab(self, target):
+		pass
+	
+	def face(self, target):
+		pass
+	
+	def  
+
 class ObjectManipulationFacade:
 	"""
 	Driver for management and manipulation of virutal objects
@@ -318,6 +330,7 @@ class ObjectManipulationFacade:
 		self.__named_size_resolver = named_size_resolver
 		self.__object_position_factory = object_position_factory
 		self.__descriptor_set = False
+		self.__virtual_objects = structures.DictionarySet()
 	
 	def set_new_descriptor(self, descriptor):
 		"""
@@ -367,4 +380,91 @@ class ObjectManipulationFacade:
 
 		self.set_new_size(size)
 	
-	def create()
+	def create(self, name, position):
+		"""
+		Creates a new VirtualObject from the parameters previously specified in this builder
+
+		@param name: The name to give to this new object
+		@type name: String
+		@param position: The place to put this new object and its orientaiton
+		@type position: String (named prefabricated position) or ObjectPosition
+		"""
+		
+		new_object = self.__object_builder.create(name, position)
+		self.__virtual_objects[name] = new_object
+	
+	def get_objects(self, update=False):
+		"""
+		Returns a list of all of the object Haikw is aware of in the target simulation 
+
+		@keyword update: If True, all the object's positions will be updated before returned. Otherwise will return position from last check. Defaults to False.
+		@type update: bool
+		"""
+		if update:
+			ret_val = []
+			for name in self.__virtual_objects.keys():
+				orig = self.__virtual_objects[name]
+				updated = self.update(orig)
+				self.__virtual_objects[name] = updated
+				ret_val.append(updated)
+		else:
+			ret_val = self.__virtual_objects.vals()
+		
+		return ret_val
+	
+	def update(self, target):
+		"""
+		Finds the updated state of a given VirtualObject
+
+		@param target: The object to find the updated state for
+		@target target: VirtualObject
+		"""
+		name = target.get_name()
+		new = self.__manipulation_strategy.update(target)
+		del self.__virtual_objects[name]
+		self.__virtual_objects[name] = new
+		return new
+	
+	def grab(self, target, affector = None):
+		"""
+		Grabs the given object from within the inverse kinematics simulation
+
+		@param target: The object to grasp
+		@type target: VirtualObject
+		@keyword affector: Affector to use to carry out the given action. If not specified, the underlying library will decide.
+		@type affector: RobotPart
+		"""
+		self.__manipulation_strategy.grab(target, affector)
+	
+	def grab_by_name(self, name, affector = None):
+		"""
+		Grab an object by name from within the inverse kinematics simulation
+
+		@param name: The name of the object to grasp
+		@type name: String
+		@keyword affector: Affector to use to carry out the given action. If not specified, the underlying library will decide.
+		@type affector: RobotPart
+		"""
+		self.grab(self.__virtual_objects[name], affector)
+	
+	def face(self, target, part = None):
+		"""
+		Have the robot in the simulation "face" the target virtual object
+
+		@param target: The object to face
+		@type target: VirtualObject
+		@keyword part: The part of the robot that will face the target object. If not specified, the underlying library will decide.
+		@type part: RobotPart
+		"""
+		self.__manipulation_strategy.face(target, part)
+	
+	def face_by_name(self, name, part = None):
+		"""
+		Have the robot in the simulation "face" the virtual object with the given name
+
+		@param name: The name of the object to face
+		@type name: String
+		@keyword part: The part of the robot that will face the target object. If not specified, the underlying library will decide.
+		@type part: RobotPart 
+		"""
+		self.face(self.__virtual_objects[name])
