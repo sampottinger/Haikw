@@ -26,56 +26,89 @@ class SetupSerializer:
 		
 		return SetupSerializer.__instance
 	
+	def list_to_dict(self, target):
+		"""
+		Turns a list of Setups into a dictionary
+
+		@param target: The Setups to turn into a dictionary
+		@type target: Collection of Setups
+		@return: Cooresponding dictionary filled with keys of Setup names and values of Setups
+		@rtype: Dictionary
+		"""
+
+		return_dict = {}
+
+		for setup in target:
+			return_dict[setup.get_name()] : self.to_dict(setup)
+		
+		return return_dict
+
 	def to_dict(self, target):
 		"""
-		Turns a list of setups into a dictionary describing the setups
+		Turns a setup into a dictionary describing the setup
 
-		@param target: The list of setups to turn into dictionaries
-		@type target: List of Setup
-		@return: Dictionary with entries corresponding to the input setups
+		@param target: The setup to turn into dictionaries
+		@type target: Setup
+		@return: Dictionary with entries corresponding to the input setup
 		@rtype: Dictionary
 		"""
 
 		virtual_object_serializer = VirtualObjectSerializer.get_instance()
 
-		ret_list = {}
-		for setup in target:
-			name = setup.get_name()
+		# Get each of the objects serialized
+		virtual_objects = []
+		for obj in setup.get_objects():
+			serialized = virtual_object_serializer.to_dict(obj)
+			virtual_objects.append(serialized)
+		
+		ret_dict = {}
+		ret_dict["name"] = target.get_name()
+		ret_dict["robot_state"] = target.get_robot_state()
+		ret_dict["robot_descriptor"] = target.get_robot_descriptor()
+		ret_dict["virtual_objects"] = virtual_objects
 
-			# Get each of the objects serialized
-			virtual_objects = []
-			for obj in setup.get_objects():
-				serialized = virtual_object_serializer.to_dict(obj)
-				virtual_objects.append(serialized)
-
-			ret_list[name] = virtual_objects
+		return ret_dict
 	
+	def list_from_dict(self, target):
+		"""
+		Turns a dictionary filled with keys of Setup names into Setups
+
+		@param target: Dictionary that contains information necessary to construct Setups
+		@type target: Dictionary
+		@return: List of Setups extracted from the provided dictionary
+		@rtype: List of Setups
+		"""
+
+		ret_list = []
+
+		for name in target.keys():
+			ret_list.append(self.from_dict(target[name]))
+		
+		return ret_list
+
 	def from_dict(self, target):
 		"""
-		Turns a dictionary containing information regarding setups into actual setups
+		Turns a dictionary containing information regarding a setup into an actual setup
 
-		@param target: Dictionary containing information about the setups
+		@param target: Dictionary containing information about the setup
 		@type target: Dictionary
-		@return: List of corresponding setups
-		@rtype: List of Setups
+		@return: Cooresponding setup
+		@rtype: Setup
 		"""
 
 		virtual_object_serializer = VirtualObjectSerializer.get_instance()
 
-		ret_list = []
+		# Get each of the objects serialized
+		virtual_objects = []
+		for obj in target["virtual_objects"]:
+			deserialized = virtual_object_serializer.from_dict(obj)
+			virtual_objects.append(deserialized)
 
-		for name in target.get_keys():
+		name = target["name"]
+		robot_state = target["robot_state"]
+		robot_descriptor = target["robot_descriptor"]
 
-			# Get each of the objects de-serialized
-			virtual_objects = []
-			for obj in target[name]:
-				unserialized = virtual_object_serializer.from_dict(obj)
-				virtual_objects.append(obj)
-			
-			new_setup = experiment.Setup(name, virtual_objects)
-			ret_list.append(new_setup)
-		
-		return ret_list
+		return experiment.Setup(name, virtual_objects, robot_state, robot_descriptor)
 
 class VirtualObjectSerializer:
 	"""

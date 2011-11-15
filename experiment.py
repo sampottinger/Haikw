@@ -28,6 +28,8 @@ class RobotPart:
 class Robot:
 	"""
 	Description of a robot and its parts
+
+	@note: This is partially abstract and a package specific subclass should be used
 	"""
 
 	def __init__(self, name, parts, descriptor):
@@ -61,13 +63,22 @@ class Robot:
 		@rtype: Tuple of RobotParts
 		"""
 		return self.__parts
+	
+	def get_state(self):
+		"""
+		Get a serializable representation of this robot's state such that it can be saved and restored
+
+		@return: The robot's current state
+		@rtype: Serializable Python collection
+		"""
+		raise NotImplementedError("Need subclass of this abstract class to preform this action")
 
 class Setup:
 	"""
 	Serializable immutable state containing objects and their current positions
 	"""
 
-	def __init__(self, name, objects):
+	def __init__(self, name, objects, robot_state, robot_descriptor):
 		"""
 		Constructor for Setup
 
@@ -76,9 +87,14 @@ class Setup:
 		@param objects: The objects in this setup
 		@type objects: List / Tuple of VirtualObjects
 		@note: The name is unique in any given runtime
+		@param robot_state: Python serializable description of the involved Robot's state
+		@param robot_descriptor: Package specific descriptor of the robot in this setup
+		@type robot_descriptor: String
 		"""
 		self.__name = name
 		self.__objects = tuple(objects)
+		self.__robot_state = robot_state
+		self.__robot_descriptor = robot_descriptor
 	
 	def get_objects(self):
 		"""
@@ -97,6 +113,23 @@ class Setup:
 		@rtype: String
 		"""
 		return self.__name
+	
+	def get_robot_state(self):
+		"""
+		Get the robot's state in this setup
+
+		@return: The serializable state of this robot
+		"""
+		return self.__robot_state
+	
+	def get_robot_descriptor(self):
+		"""
+		Get the indentifiable descriptor of the robot in this setup
+
+		@return: Unique package specific descriptor of this setup's robot
+		@rtype: String
+		"""
+		return self.__robot_descriptor
 
 class SetupManager:
 	"""
