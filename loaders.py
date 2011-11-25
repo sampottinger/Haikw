@@ -165,7 +165,3 @@ class PyYamlAdapter(ConfigReader):
 		converted_contents = yaml.load(orig_contents)
 		target.close()
 		return converted_contents
-
-class ConfigReaderFacade:
-	# TODO: Pick up here, still need to update serializers.ConfigReaderFacade in manipuation
-	def __init__()

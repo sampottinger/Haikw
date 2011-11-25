@@ -67,7 +67,7 @@ class PackageManager:
 		self.__language = language
 		
 		# Get a reader
-		reader = loaders.ConfigReaderFactory.get_instance().get_reader(language)
+		self.__reader = loaders.ConfigReaderFactory.get_instance().get_reader(language)
 
 		# If we are using a file
 		if configuration_file:
@@ -78,13 +78,13 @@ class PackageManager:
 			fixer = PathFixer.get_instance()
 
 			# Read data
-			self.__data = reader.load(fixer.fix(configuration_file))
+			self.__data = self.__reader.load(fixer.fix(configuration_file))
 		
 		# If loading from strings
 		elif configuration:
 
 			# Read data
-			self.__data = reader.loads(configuration)
+			self.__data = self.__reader.loads(configuration)
 
 		# Need some more configuration
 		else:
@@ -106,10 +106,10 @@ class PackageManager:
 			raise ValueError("This package does not provide color information")
 		
 		if self.__using_files:
-			return serializers.ConfigReaderFacade.load(entry[PackageManager.COLOR_DESCRIPTOR], self.__language)
+			return self.__reader.load(entry[PackageManager.COLOR_DESCRIPTOR], self.__language)
 		
 		else:
-			return serializers.ConfigReaderFacade.loads(entry[PackageManager.COLOR_DESCRIPTOR], self.__language)
+			return self.__reader.loads(entry[PackageManager.COLOR_DESCRIPTOR], self.__language)
 
 	def get_sizes_config(self, package_name):
 		"""
@@ -127,10 +127,10 @@ class PackageManager:
 			raise ValueError("This package does not provide color information")
 		
 		if self.__using_files:
-			return serializers.ConfigReaderFacade.load(entry[PackageManager.SIZE_DESCRIPTOR], self.__language)
+			return self.__reader.load(entry[PackageManager.SIZE_DESCRIPTOR], self.__language)
 		
 		else:
-			return serializers.ConfigReaderFacade.loads(entry[PackageManager.SIZE_DESCRIPTOR], self.__language)
+			return self.__reader.loads(entry[PackageManager.SIZE_DESCRIPTOR], self.__language)
 
 	def get_positions_config(self, package_name):
 		"""
@@ -148,10 +148,10 @@ class PackageManager:
 			raise ValueError("This package does not provide position information")
 		
 		if self.__using_files:
-			return serializers.ConfigReaderFacade.load(entry[PackageManager.POSITIONS_DESCRIPTOR], self.__language)
+			return self.__reader.load(entry[PackageManager.POSITIONS_DESCRIPTOR], self.__language)
 		
 		else:
-			return serializers.ConfigReaderFacade.loads(entry[PackageManager.POSITIONS_DESCRIPTOR], self.__language)
+			return self.__reader.loads(entry[PackageManager.POSITIONS_DESCRIPTOR], self.__language)
 
 	def get_manipulation_source_file(self, package_name):
 		"""
@@ -242,10 +242,10 @@ class PackageManager:
 			raise ValueError("This package does not provide a location for a configuration file for named setups")
 		
 		if self.__using_files:
-			return serializers.ConfigReaderFacade.load(entry[PackageManager.SETUP_DESCRIPTOR], self.__language)
+			return self.__reader.load(entry[PackageManager.SETUP_DESCRIPTOR], self.__language)
 		
 		else:
-			return serializers.ConfigReaderFacade.loads(entry[PackageManager.SETUP_DESCRIPTOR], self.__language)
+			return self.__reader.loads(entry[PackageManager.SETUP_DESCRIPTOR], self.__language)
 
 	def get_robot_config(self, package_name):
 		"""
@@ -262,10 +262,10 @@ class PackageManager:
 			raise ValueError("This package does not provide a location for a configuration file for robots")
 		
 		if self.__using_files:
-			return serializers.ConfigReaderFacade.load(entry[PackageManager.ROBOT_DESCRIPTOR], self.__language)
+			return self.__reader.load(entry[PackageManager.ROBOT_DESCRIPTOR], self.__language)
 		
 		else:
-			return serializers.ConfigReaderFacade.loads(entry[PackageManager.ROBOT_DESCRIPTOR], self.__language)
+			return self.__reader.loads(entry[PackageManager.ROBOT_DESCRIPTOR], self.__language)
 	
 	def get_prototypes_config(self, package_name):
 		"""
@@ -282,10 +282,10 @@ class PackageManager:
 			raise ValueError("This package does not provide a location for a configuration file for prototypes")
 		
 		if self.__using_files:
-			return serializers.ConfigReaderFacade.load(entry[PackageManager.PROTOTYPE_DESCRIPTOR], self.__language)
+			return self.__reader.load(entry[PackageManager.PROTOTYPE_DESCRIPTOR], self.__language)
 		
 		else:
-			return serializers.ConfigReaderFacade.loads(entry[PackageManager.PROTOTYPE_DESCRIPTOR], self.__language)
+			return self.__reader.loads(entry[PackageManager.PROTOTYPE_DESCRIPTOR], self.__language)
 
 	def __get_package_info(self, package_name):
 
@@ -413,7 +413,7 @@ class ObjectManipulationFactory:
 		# Create strategies
 		color_strategy = configurable.ComplexColorResolutionFactory.get_instance().create_strategy(colors)
 		size_strategy = configurable.ComplexNamedSizeResolverFactory.get_instance().create_resolver(sizes)
-		position_strategy = configurable.ObjectPositionFactoryConstructor.get_instance().create_factory(positions)
+		position_strategy = configurable.VirtualObjectPositionFactoryConstructor.get_instance().create_factory(positions)
 		object_strategy = configurable.MappedObjectResolverFactory.get_instance().create_resolver(prototypes_source, size_strategy, color_strategy)
 
 		# Create builder
@@ -432,16 +432,25 @@ class ObjectManipulationFactory:
 # TODO: Docs and exceptions
 class VirtualObjectManipulationStrategy:
 
-	def refresh(self, target):
+	def get_default_affector(self):
+		pass
+
+	def refresh(self, target, affector):
 		pass
 	
-	def grab(self, target):
+	def grab(self, target, affector):
 		pass
 	
-	def face(self, target):
+	def face(self, affector, position):
 		pass 
 	
 	def update(self, target, position):
+		pass
+	
+	def release(self, affector):
+		pass
+	
+	def delete(self, target):
 		pass
 
 class ExternalObjectBuilder:
@@ -458,7 +467,7 @@ class ExternalObjectBuilder:
 		@param object_strategy: Strategy to resolve named object prototypes
 		@type object_strategy: NamedObjectResolver implementor
 		@param position_strategy: The strategy used to change names of positions to actual positions
-		@type position_strategy: ObjectPositionFactory
+		@type position_strategy: VirtualObjectPositionFactory
 		@param facade: The facade this builder will register objects with
 		@type facade: ObjectManipulationFacade
 		"""
@@ -523,7 +532,7 @@ class ExternalObjectBuilder:
 		@param name: The name to give to this new object
 		@type name: String
 		@param position: The place to put this new object and its orientaiton
-		@type position: String (named prefabricated position) or ObjectPosition
+		@type position: String (named prefabricated position) or VirtualObjectPosition
 		@return: The new object for simulation
 		@rtype: VirtualObject
 		"""
@@ -576,7 +585,7 @@ class ObjectManipulationFacade:
 		@param named_size_resolver: The strategy to use to resolve names of sizes to actual sizes
 		@type named_size_resolver: NamedSizeResolver
 		@param object_position_factory: Factory to create positions
-		@type object_position_factory: ObjectPositionFactory
+		@type object_position_factory: VirtualObjectPositionFactory
 		@param setup_manager: Manager of setups
 		@type setup_manager: SetupManager
 		@param robot_manager: Manager of potential robots for this facade
@@ -596,6 +605,20 @@ class ObjectManipulationFacade:
 		self.__robot_manager = robot_manager
 		self.__object_strategy = object_strategy
 	
+	def delete(self, target):
+		"""
+		Deletes the given target object
+
+		@param target: Object to remove from the simulation
+		@type target: VirtualObject or String name to resolve
+		"""
+		if isinstance(target, str):
+			target = self.get_object(target)
+		elif not isinstance(target, VirtualObject):
+			raise ValueError("Expected String name for target or VirtualObject")
+		
+		self.__manipulation_strategy.delete(target)
+
 	def get_object_builder(self):
 		""" Return a common builder for this factory """
 		if not self.__external_facing_object_builder:
@@ -686,47 +709,77 @@ class ObjectManipulationFacade:
 		self.__virtual_objects[name] = new
 		return new
 	
+	def put(self, target, position, affector = None):
+		"""
+		Moves target to position using robotic affectors
+
+		@param target: The object to move
+		@type target: VirtualObject or String name of a simulated VirtualObject
+		@param position: The position to move this object to
+		@type position: String name of a prefacbricated position or VirtualObjectPosition
+		@keyword affector: Specify which affector to use to do the manipulation
+		@type affector: RobotPart
+		"""
+		if affector == None:
+			affector = self.__manipulation_strategy.get_default_affector()
+		
+		self.grab(target, affector=affector)
+		self.face(position, affector=affector)
+		self.release(affector=affector)
+	
+	def release(self, affector=None):
+		"""
+		Has the given end affector "release" 
+
+		@param affector: The affector to put into a "release" state
+		@type affector: RobotPart
+		"""
+		if affector == None:
+			affector = self.__manipulation_strategy.get_default_affector()
+		
+		self.__manipulation_strategy.release(affector)
+	
 	def grab(self, target, affector = None):
 		"""
 		Grabs the given object from within the inverse kinematics simulation
 
 		@param target: The object to grasp
-		@type target: VirtualObject
+		@type target: VirtualObject or String name
 		@keyword affector: Affector to use to carry out the given action. If not specified, the underlying library will decide.
 		@type affector: RobotPart
 		"""
+		if affector == None:
+			affector = self.__manipulation_strategy.get_default_affector()
+		
+		if isinstance(target, str):
+			target = self.get_object(target)
+		elif not isinstance(target, VirtualObject):
+			raise ValueError("Position must be the name (string) of a simulated object or a VirtualObject")
+
 		self.__manipulation_strategy.grab(target, affector)
 	
-	def grab_by_name(self, name, affector = None):
-		"""
-		Grab an object by name from within the inverse kinematics simulation
-
-		@param name: The name of the object to grasp
-		@type name: String
-		@keyword affector: Affector to use to carry out the given action. If not specified, the underlying library will decide.
-		@type affector: RobotPart
-		"""
-		self.grab(self.__virtual_objects[name], affector)
-	
-	def face(self, target, part = None):
+	def face(self, target, affector = None):
 		"""
 		Have the robot in the simulation "face" the target virtual object
 
 		@param target: The object to face
 		@type target: VirtualObject
-		@keyword part: The part of the robot that will face the target object. If not specified, the underlying library will decide.
-		@type part: RobotPart
+		@keyword affector: The part of the robot that will face the target object. If not specified, the underlying library will decide.
+		@type affector: RobotPart
 		"""
-		self.__manipulation_strategy.face(target, part)
+		if affector == None:
+			affector = self.__manipulation_strategy.get_default_affector()
+
+		self.__manipulation_strategy.face(target, affector)
 	
-	def face_by_name(self, name, part = None):
+	def face_by_name(self, name, affector = None):
 		"""
 		Have the robot in the simulation "face" the virtual object with the given name
 
 		@param name: The name of the object to face
 		@type name: String
-		@keyword part: The part of the robot that will face the target object. If not specified, the underlying library will decide.
-		@type part: RobotPart 
+		@keyword affector: The part of the robot that will face the target object. If not specified, the underlying library will decide.
+		@type affector: RobotPart 
 		"""
 		self.face(self.__virtual_objects[name])
 
