@@ -9,7 +9,7 @@ Unit tests for the Haikw library
 
 import unittest
     
-class IntegerArithmenticTestCase(unittest.TestCase):
+class CreateTestCase(unittest.TestCase):
     def testAdd(self):  ## test method names begin 'test*'
         self.assertEqual((1 + 2), 3)
         self.assertEqual(0 + 1, 1)

@@ -356,46 +356,47 @@ class ObjectManipulationFactory:
 		@raise ValueError: Raised if a strategy is requested for a package that has not been adapted or if that adapter has not been registered (see add_object_construction_strategy)
 		"""
 		
-		serializer = serializers.ConfigReaderFacade.get_instance()
+		serializer_factory = loaders.ConfigReaderFactory.get_instance()
+		serializer = serializer_factory.get_reader(language)
 
 		# Load sources as needed
 		if colors_source != None:
-			colors = serializer.loads(colors_source, language)
+			colors = serializer.loads(colors_source)
 		elif colors_file_location:
-			colors = serializer.load(colors_file_location, language)
+			colors = serializer.load(colors_file_location)
 		else:
 			colors = self.__package_manager.get_colors_config(package)
 
 		if sizes_source != None:
-			sizes = serializer.loads(sizes_source, language)
+			sizes = serializer.loads(sizes_source)
 		elif sizes_file_location:
-			sizes = serializer.load(sizes_file_location, language)
+			sizes = serializer.load(sizes_file_location)
 		else:
 			sizes = self.__package_manager.get_sizes_config(package)
 
 		if positions_source != None:
-			positions = serializer.loads(positions_source, language)
+			positions = serializer.loads(positions_source)
 		elif positions_file_location:
-			positions = serializer.load(positions_file_location, language)
+			positions = serializer.load(positions_file_location)
 		else:
 			positions = self.__package_manager.get_positions_config(package)
 
 		if setup_source_source != None:
-			setup_source = serializer.loads(setup_source, language)
+			setup_source = serializer.loads(setup_source)
 		elif setup_file_location:
-			setup_source = serializer.load(setup_file_location, language)
+			setup_source = serializer.load(setup_file_location)
 		else:
 			setup_source = self.__package_manager.get_setup_config(package)
 
 		if robot_source_source != None:
-			robot_source = serializer.loads(robot_source, language)
+			robot_source = serializer.loads(robot_source)
 		elif robot_file_location:
-			robot_source = serializer.load(robot_file_location, language)
+			robot_source = serializer.load(robot_file_location)
 		else:
 			robot_source = self.__package_manager.get_robot_config(package)
 		
 		if prototypes_source != None:
-			prototypes_source = serializer.loads(prototypes_source, language)
+			prototypes_source = serializer.loads(prototypes_source)
 		elif prototypes_file_location:
 			prototypes_source = serializer.load(prototypes_file_location)
 		else:
@@ -431,27 +432,30 @@ class ObjectManipulationFactory:
 
 # TODO: Docs and exceptions
 class VirtualObjectManipulationStrategy:
+	"""
+	Fully abstract class / interface for stratgies for package specific manipulation and management tasks
+	"""
 
 	def get_default_affector(self):
-		pass
+		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
 
 	def refresh(self, target, affector):
-		pass
+		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
 	
 	def grab(self, target, affector):
-		pass
+		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
 	
 	def face(self, affector, position):
-		pass 
+		praise NotImplementedError("Must use implementor of this interface / fully abstract class")
 	
 	def update(self, target, position):
-		pass
+		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
 	
 	def release(self, affector):
-		pass
+		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
 	
 	def delete(self, target):
-		pass
+		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
 
 class ExternalObjectBuilder:
 	"""

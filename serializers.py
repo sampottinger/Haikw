@@ -430,7 +430,7 @@ class PositionSerializer:
 		Turns a position into a dictionary
 
 		@param target: The position to serialize
-		@type target: ObjectPosition
+		@type target: VirtualObjectPosition
 		@return: Dictionary with entries corresponding to the input 
 		@rtype: Dictionary
 		"""
@@ -453,7 +453,7 @@ class PositionSerializer:
 		@param target: Dictionary containing information about the position
 		@type target: Dictionary
 		@return: Corresponding position
-		@rtype: ObjectPosition
+		@rtype: VirtualObjectPosition
 		"""
 
 		x = target["x"]
@@ -463,4 +463,4 @@ class PositionSerializer:
 		pitch = target["pitch"]
 		yaw = target["yaw"]
 
-		return state.ObjectPosition(x, y, z, roll, pitch, yaw)
+		return state.VirtualObjectPosition(x, y, z, roll, pitch, yaw)
