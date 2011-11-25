@@ -1,5 +1,10 @@
 """
 Module containing classes related to the management of experimental setups and robots
+
+@author: Sam Pottinger
+@license: GNU General Public License v2
+@copyright: 2011
+@organization: Andrews Robotics Initiative at CU Boulder
 """
 
 class RobotPart:

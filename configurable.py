@@ -10,34 +10,27 @@ Module containing factories driven by user provided configuration
 import re
 import virtualobject
 
-class MappedColorResolutionFactory:
+class ComplexColorResolutionFactory:
 	"""
-	Factory singleton creating MappedColorResolutionStrategies from dicts
+	Factory singleton creating ComplexColorResolutionStrategies from dicts
 	"""
-
-	RED = "red"
-	BLUE = "blue"
-	GREEN = "green"
-
-	__instance = None
-	__hex_regex = None
 
 	def get_instance(self):
 		"""
-		Returns a shared instance of this MappedColorResolutionFactory, creating it if necessary
+		Returns a shared instance of this ComplexColorResolutionFactory, creating it if necessary
 
 		@return: Shared instance of this singleton
-		@rtype: MappedColorResolutionFactory
+		@rtype: ComplexColorResolutionFactory
 		"""
 
-		if not MappedColorResolutionFactory.__instance:
-			MappedColorResolutionFactory.__instance = MappedColorResolutionFactory()
+		if not ComplexColorResolutionFactory.__instance:
+			ComplexColorResolutionFactory.__instance = ComplexColorResolutionFactory()
 		
-		return MappedColorResolutionFactory.__instance
+		return ComplexColorResolutionFactory.__instance
 	
 	def __init__(self):
 		"""
-		Constructor for MappedColorResolutionFactory
+		Constructor for ComplexColorResolutionFactory
 
 		@note: This class is a singleton and this should only be called internally
 		"""
@@ -45,110 +38,120 @@ class MappedColorResolutionFactory:
 	
 	def create_strategy(self, data):
 		"""
-		Creates a new MappedColorResolutionStrategy from the given data
+		Creates a new ComplexColorResolutionStrategy from the given data
 
 		@param data: dict 
 		@type data: Dictionary of the form {"colorname":{"red":decimal, "green":decimal, "blue":decimal}} or {"colorname":"#rrggbb"}
 		"""
 
-		strategy = virtualobject.MappedColorResolutionStrategy()
+		strategy = virtualobject.ComplexColorResolutionStrategy()
 
 		for name in data.keys():
-
-			# Create color
-			new_color = self.__create_color(data[name])
 
 			# Add it to the new strategy
 			strategy.add_color(name, new_color)
 		
 		return strategy
-	
-	def __create_color(self, color):
-		"""
-		Creates a new color from the given description of it
 
-		@param color: Dictionary or string describing this color
-		@type color: Dictionary or String
-		@return: New color corresponding to the given description
-		@rtype: VirtualObjectColor
-		"""
+class MappedObjectResolverFactory:
+	""" 
+	Factory singleton to create MappedObjectResolver from Python dictionaries
+	"""
 
-		# Extract from form #rrggbb
-		if isinstance(color, str): 
-			
-			if self.__hex_regex == None:
-				self.__hex_regex = re.compile("\#(?P=<red>\d{2})(?P=<blue>\d{2})(?P=<green>\d{2})")
-
-			match = self.__hex_regex.match(color)
-
-			if match == None:
-				raise ValueError("Invalid color value, need #rrggbb or individual components")
-
-			red = int(match.group("red"), 16)
-			blue = int(match.group("blue"), 16)
-			green = int(match.group("green"), 16)
-
-		# Extract from dictionary listing
-		else:
-			
-			# Extract red
-			if not MappedColorResolutionFactory.RED in color:
-				raise ValueError("Red not specified for this color")
-			red = color[MappedColorResolutionFactory.RED]
-
-			if not isinstance(red, int):
-				raise ValueError("The value for red was not given as a base 10 integer")
-
-			if red > 255 or red < 0:
-				raise ValueError("The value for red was between 0 and 255")
-
-			
-			# Extract blue
-			if not MappedColorResolutionFactory.BLUE in color:
-				raise ValueError("Blue not specified for this color")
-			blue = color[MappedColorResolutionFactory.BLUE]
-
-			if not isinstance(blue, int):
-				raise ValueError("The value for blue was not given as a base 10 integer")
-
-			if blue > 255 or blue < 0:
-				raise ValueError("The value for blue was between 0 and 255")
-
-			
-			# Extract green
-			if not MappedColorResolutionFactory.GREEN in color:
-				raise ValueError("Green not specified for this color")
-			green = color[MappedColorResolutionFactory.GREEN]
-
-			if not isinstance(green, int):
-				raise ValueError("The value for green was not given as a base 10 integer")
-
-			if green > 255 or green < 0:
-				raise ValueError("The value for green was between 0 and 255")
-		
-		return virtualobject.VirtualObjectColor(red, green, blue)
-
-class MappedNamedSizeResolverFactory:
-	""" Factory singleton to create MappedNamedSizeResolver from Python dictionaries """
+	DESCRIPTOR = "descriptor"
+	SIZE = "size"
+	COLOR = "color"
 
 	__instance = None
 
 	def get_instance(self):
 		"""
-		Returns a shared instance of this MappedNamedSizeResolverFactory, creating it if necessary
+		Returns a shared instance of this MappedObjectResolverFactory, creating it if necessary
 
 		@return: Shared instance of this singleton
-		@rtype: MappedNamedSizeResolverFactory
+		@rtype: MappedObjectResolverFactory
 		"""
 
-		if not MappedNamedSizeResolverFactory.__instance:
-			MappedNamedSizeResolverFactory.__instance = MappedNamedSizeResolverFactory()
+		if not MappedObjectResolverFactory.__instance:
+			MappedObjectResolverFactory.__instance = MappedObjectResolverFactory()
 		
-		return MappedNamedSizeResolverFactory.__instance
+		return MappedObjectResolverFactory.__instance
 	
 	def __init__(self):
 		"""
-		Constructor for MappedNamedSizeResolverFactory
+		Constructor for MappedObjectResolverFactory
+
+		@note: This class is a singleton and this should only be called internally
+		"""
+		pass
+	
+	def create_resolver(self, prototypes, size_resolver, color_resolver):
+		"""
+		Creates a new MappedObjectResolver
+
+		@param prototypes: Python attributes loaded from configuration files
+		@type prototypes: Dictionary containing descriptor, size, color
+		@param size_resolver: Resolver from names to sizes
+		@type size_resolver: NamedSizeResolver implementor
+		@param color_resolver: Resolver from names to colors
+		@type color_resolver: ColorResolutionStrategy
+		@return: New MappedObjectResolver instance
+		@rtype: MappedObjectResolver
+		"""
+		# Create new resolver
+		resolver = virtualobject.MappedObjectResolver()
+
+		for name in prototypes:
+			data = prototypes[data]
+
+			# Extract descriptor
+			if not MappedObjectResolverFactory.DESCRIPTOR in data:
+				raise ValueError("This prototype description does not include a descriptor")
+			
+			descriptor = data[MappedObjectResolverFactory.DESCRIPTOR]
+
+			# Extract size
+			if not MappedObjectResolverFactory.SIZE in data:
+				raise ValueError("This prototype description does not include a size")
+			
+			size = size_resolver.get_size(data[MappedObjectResolverFactory.SIZE])
+
+			# Extract color
+			if not MappedObjectResolverFactory.COLOR in data:
+				raise ValueError("This prototype description does not include a color")
+			
+			color = color_resolver.get_size(data[MappedObjectResolverFactory.COLOR])	
+			# Create flyweight and add
+			flyweight = virtualobject.ObjectResolverFlyweight(color, size, descriptor)
+			
+			# Add to new resolover
+			resolver.add_object(name, flyweight)
+		
+		return resolver
+
+class ComplexNamedSizeResolverFactory:
+	""" 
+	Factory singleton to create ComplexNamedSizeResolver from Python dictionaries 
+	"""
+
+	__instance = None
+
+	def get_instance(self):
+		"""
+		Returns a shared instance of this ComplexNamedSizeResolverFactory, creating it if necessary
+
+		@return: Shared instance of this singleton
+		@rtype: ComplexNamedSizeResolverFactory
+		"""
+
+		if not ComplexNamedSizeResolverFactory.__instance:
+			ComplexNamedSizeResolverFactory.__instance = ComplexNamedSizeResolverFactory()
+		
+		return ComplexNamedSizeResolverFactory.__instance
+	
+	def __init__(self):
+		"""
+		Constructor for ComplexNamedSizeResolverFactory
 
 		@note: This class is a singleton and this should only be called internally
 		"""
@@ -156,15 +159,15 @@ class MappedNamedSizeResolverFactory:
 	
 	def create_resolver(self, data):
 		"""
-		Creates a new MappedNamedSizeResolver
+		Creates a new ComplexNamedSizeResolver
 
 		@param data: Python attributes loaded from configuration files
 		@type: Dictionary containing {"name" : [float1, float2]}
-		@return: New MappedNamedSizeResolver instance
-		@rtype: MappedNamedSizeResolver
+		@return: New ComplexNamedSizeResolver instance
+		@rtype: ComplexNamedSizeResolver
 		"""
 
-		new_resolver = virtualobject.MappedNamedSizeResolver()
+		new_resolver = virtualobject.ComplexNamedSizeResolver()
 
 		if not isinstance(data, dict):
 			raise ValueError("Expected dictionary for data")
@@ -175,9 +178,9 @@ class MappedNamedSizeResolverFactory:
 		
 		return new_resolver
 
-class ObjectPositionFactoryConstructor:
+class VirtualObjectPositionFactoryConstructor:
 	"""
-	Factory singleton that creates ObjectPositionFactory
+	Factory singleton that creates VirtualObjectPositionFactory
 	"""
 
 	DEFAULT_ROLL = 0
@@ -186,20 +189,20 @@ class ObjectPositionFactoryConstructor:
 
 	def get_instance(self):
 		"""
-		Returns a shared instance of this ObjectPositionFactoryConstructor, creating it if necessary
+		Returns a shared instance of this VirtualObjectPositionFactoryConstructor, creating it if necessary
 
 		@return: Shared instance of this singleton
-		@rtype: ObjectPositionFactoryConstructor
+		@rtype: VirtualObjectPositionFactoryConstructor
 		"""
 
-		if not ObjectPositionFactoryConstructor.__instance:
-			ObjectPositionFactoryConstructor.__instance = ObjectPositionFactoryConstructor()
+		if not VirtualObjectPositionFactoryConstructor.__instance:
+			VirtualObjectPositionFactoryConstructor.__instance = VirtualObjectPositionFactoryConstructor()
 		
-		return ObjectPositionFactoryConstructor.__instance
+		return VirtualObjectPositionFactoryConstructor.__instance
 	
 	def __init__(self):
 		"""
-		Constructor for ObjectPositionFactoryConstructor
+		Constructor for VirtualObjectPositionFactoryConstructor
 
 		@note: This class is a singleton and this should only be called internally
 		"""
@@ -207,12 +210,12 @@ class ObjectPositionFactoryConstructor:
 	
 	def create_factory(self, data):
 		"""
-		Creates a new ObjectPositionFactory from the given data
+		Creates a new VirtualObjectPositionFactory from the given data
 
 		@param data: Data loaded from configuration files
 		@type data: Dictionary of form {"name" : {"x":float, "y":float, "z":float, "roll":float, "pitch":float, "yaw":float}}
-		@return: New ObjectPositionFactory instance with the given data as prefabricated positions
-		@rtype: ObjectPositionFactory
+		@return: New VirtualObjectPositionFactory instance with the given data as prefabricated positions
+		@rtype: VirtualObjectPositionFactory
 		"""
 
 		if not isinstance(data, dict):
@@ -245,6 +248,6 @@ class ObjectPositionFactoryConstructor:
 			yaw = entry["yaw"]
 			
 			# Create new position
-			prefabricated_positions[name] = virtualobject.ObjectPosition(x, y, z, roll, pitch, yaw)
+			prefabricated_positions[name] = virtualobject.VirtualObjectPosition(x, y, z, roll, pitch, yaw)
 		
-		return virtualobject.ObjectPositionFactory(ObjectPositionFactoryConstructor.DEFAULT_ROLL, ObjectPositionFactoryConstructor.DEFAULT_PITCH, ObjectPositionFactoryConstructor.DEFAULT_YAW, prefabricated_positions)
+		return state.VirtualObjectPositionFactory(VirtualObjectPositionFactoryConstructor.DEFAULT_ROLL, VirtualObjectPositionFactoryConstructor.DEFAULT_PITCH, VirtualObjectPositionFactoryConstructor.DEFAULT_YAW, prefabricated_positions)

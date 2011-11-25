@@ -41,9 +41,9 @@ class PathFixer:
 		"""
 		return path.replace("/", os.sep)
 
-class YamlReaderFactory:
+class ConfigReaderFactory:
 	"""
-	Factory singleton that provides an implementation of YamlReader
+	Factory singleton that provides an implementation of various configuration readers
 	"""
 
 	__instance = None
@@ -51,31 +51,31 @@ class YamlReaderFactory:
 	@classmethod
 	def get_instance(self):
 		"""
-		Returns a shared instance of YamlReaderFactory, creating it if necessary
+		Returns a shared instance of ConfigReaderFactory, creating it if necessary
 
 		@return: Shared instance of this singleton
-		@rtype: YamlReaderFactory
+		@rtype: ConfigReaderFactory
 		"""
-		if not YamlReaderFactory.__instance:
-			YamlReaderFactory.__instance = YamlReaderFactory()
+		if not ConfigReaderFactory.__instance:
+			ConfigReaderFactory.__instance = ConfigReaderFactory()
 		
-		return YamlReaderFactory.__instance
+		return ConfigReaderFactory.__instance
 	
 	def __init__(self):
 		pass
 	
-	def get_reader(self):
+	def get_reader(self, language):
 		"""
-		Returns an implementation of YamlReader
+		Returns an implementation of a ConfigReader
 
-		@return: Instance of a subclass of YamlReader
-		@rtype: YamlReader subclass instance
+		@return: Instance of a subclass of a ConfigReader
+		@rtype: A ConfigReader subclass instance
 		"""
 		return PyYamlAdapter.get_instance()
 
-class YamlReader:
+class ConfigReader:
 	"""
-	A simple interface for reading YAML strings
+	A simple interface for reading formatted / encoded configuration strings
 
 	@note: This is fully abstract. Client code should use a subclass. 
 	"""
@@ -85,10 +85,10 @@ class YamlReader:
 	@classmethod
 	def get_instance(self):
 		"""
-		Returns a shared instance of this YamlReader
+		Returns a shared instance of this ConfigReader
 
-		@return: Shared instance of YamlReader
-		@rtype: YamlReader
+		@return: Shared instance of ConfigReader
+		@rtype: ConfigReader
 		"""
 		raise NotImplementedError("Must use a subclass / implementor of this interface")
 
@@ -97,7 +97,7 @@ class YamlReader:
 	
 	def load(self, src):
 		"""
-		Converts the provided YAML encoded file to Python native objects
+		Converts the provided encoded file to Python native objects
 
 		@param src: Path to the file to read from
 		@type src: String
@@ -108,7 +108,7 @@ class YamlReader:
 		
 	def loads(self, str):
 		""" 
-		Converts the provided YAML encoded string to Python native objects
+		Converts the provided encoded string to Python native objects
 
 		@param str: The string to convert
 		@type str: String
@@ -117,9 +117,9 @@ class YamlReader:
 		"""
 		raise NotImplementedError("Must use a subclass / implementor of this interface")
 	
-class PyYamlAdapter(YamlReader):
+class PyYamlAdapter(ConfigReader):
 	"""
-	Adapts PyYAML library to be an implementation of YamlReader
+	Adapts PyYAML library to be an implementation of ConfigReader
 	"""
 
 	__instance = None
@@ -142,7 +142,7 @@ class PyYamlAdapter(YamlReader):
 	
 	def loads(self, string):
 		""" 
-		Converts the provided YAML encoded string to Python native objects
+		Converts the provided encoded string to Python native objects
 
 		@param string: The string to convert
 		@type string: String
@@ -165,3 +165,7 @@ class PyYamlAdapter(YamlReader):
 		converted_contents = yaml.load(orig_contents)
 		target.close()
 		return converted_contents
+
+class ConfigReaderFacade:
+	# TODO: Pick up here, still need to update serializers.ConfigReaderFacade in manipuation
+	def __init__()

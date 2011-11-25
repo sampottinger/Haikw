@@ -21,7 +21,7 @@ class VirtualObject:
 		@param name: Unique name for this virtual object
 		@type name: String
 		@param position: The current position for this VirtualObject
-		@type position: ObjectPosition
+		@type position: VirtualObjectPosition
 		@param descriptor: The descriptor used to create this VirtualObject
 		@type descriptor: String
 		@param color: The color of this VirtualObject as it was created
@@ -49,7 +49,7 @@ class VirtualObject:
 		Determine the position of this object at checking with the simulation when creating this state
 
 		@return: Position as of this state's creation
-		@rtype: ObjectPosition
+		@rtype: VirtualObjectPosition
 		@note: This is not kept up to date. To find the latest position, use an ObjectManipulationFacade
 		"""
 		return self.__position
@@ -182,31 +182,98 @@ class ColorResolutionStrategy:
 
 		raise NotImplementedError("Must use subclass / implementor of this interface")
 
-class MappedColorResolutionStrategy(ColorResolutionStrategy):
+class ComplexColorResolutionStrategy(ColorResolutionStrategy):
 	"""
-	Mapping object for simple string to color conversions
+	Mapping object for simple string names, hex encoded strings (#rrggbb), and dicts to colors
 	"""
+
+	RED = "red"
+	BLUE = "blue"
+	GREEN = "green"
 
 	def __init__(self):
 		"""
 		Constructor for MappedColorResolutionStrategy
 		"""
 		self.__colors = {}
+		self.__hex_regex = None
 	
-	def get_color(self, name):
+	def get_color(self, description):
 		"""
 		Resolves this name of a color to an actual color
 
-		@param name: The name of the color desired
-		@type name: String
+		@param decription: A description of the color desired
+		@type description: String or dict
 		@return: Color corresponding to the given name
 		@rtype: VirtualObjectColor
 		@raise ValueError: Raised if there is no mapping for the provided name
 		"""
-		if not name in self.__colors:
-			raise ValueError("No mapping available for this color name")
+		if isinstance(description, str):
+
+			# Hex description resolver
+			if description[0] == "#":
+				if self.__hex_regex == None:
+					self.__hex_regex = re.compile("\#(?P=<red>\d{2})(?P=<blue>\d{2})(?P=<green>\d{2})")
+
+				match = self.__hex_regex.match(color)
+
+				if match == None:
+					raise ValueError("Invalid color value, need #rrggbb, name, or individual components")
+				
+				red = int(match.group("red"), 16)
+				blue = int(match.group("blue"), 16)
+				green = int(match.group("green"), 16)
+			
+			# Registered name
+			elif description in self.__colors:
+				return self.__colors[description]
+			
+			# Bad string
+			else:
+				raise ValueError("Must be a hex description #rrggbb or name corresponding to a registered color. This string resolved to neither")
 		
-		return self.__colors[name]
+		# Components
+		else isinstance(description, dict):
+
+			# Extract red
+			if not ComplexColorResolutionStrategy.RED in color:
+				raise ValueError("Red not specified for this color")
+			red = color[ComplexColorResolutionStrategy.RED]
+
+			if not isinstance(red, int):
+				raise ValueError("The value for red was not given as a base 10 integer")
+
+			if red > 255 or red < 0:
+				raise ValueError("The value for red was between 0 and 255")
+
+			
+			# Extract blue
+			if not ComplexColorResolutionStrategy.BLUE in color:
+				raise ValueError("Blue not specified for this color")
+			blue = color[ComplexColorResolutionStrategy.BLUE]
+
+			if not isinstance(blue, int):
+				raise ValueError("The value for blue was not given as a base 10 integer")
+
+			if blue > 255 or blue < 0:
+				raise ValueError("The value for blue was between 0 and 255")
+
+			
+			# Extract green
+			if not ComplexColorResolutionStrategy.GREEN in color:
+				raise ValueError("Green not specified for this color")
+			green = color[ComplexColorResolutionStrategy.GREEN]
+
+			if not isinstance(green, int):
+				raise ValueError("The value for green was not given as a base 10 integer")
+
+			if green > 255 or green < 0:
+				raise ValueError("The value for green was between 0 and 255")
+		
+		else: # Unknown type
+			raise ValueError("Description needs to be a string or dictionary")
+		
+		return VirtualObjectColor(red, green, blue)
 	
 	def add_color(self, name, color):
 		"""
@@ -215,8 +282,10 @@ class MappedColorResolutionStrategy(ColorResolutionStrategy):
 		@param name: The name of the new color to add to the mapping
 		@type name: String
 		@param color: The new color to add to the mapping
-		@type color: VirtualObjectColor
+		@type color: VirtualObjectColor, String (description or hex), or dict
 		"""
+		if not isinstance(color, VirtualObjectColor):
+			color = self.get_color(color)
 		self.__colors[name] = color
 
 class VirtualObjectSize:
@@ -283,7 +352,7 @@ class VirtualObjectSize:
 
 class NamedSizeResolver:
 	"""
-	Interface / fully abstract parent class for strategies for turning names into sizes
+	Interface / fully abstract parent class for strategies for turning names or list of floats into sizes
 	"""
 
 	def get_size(self, name):
@@ -298,27 +367,35 @@ class NamedSizeResolver:
 
 		raise NotImplementedError("Must use a subclass / implementor of this interface")
 
-class MappedNamedSizeResolver(NamedSizeResolver):
+class ComplexNamedSizeResolver(NamedSizeResolver):
 	"""
-	Dictionary-based name resolver 
+	Name resolver capable of resolving lists of floats and named sizes to VirtualObjectSize instances
 	"""
 
 	def __init__(self):
 		NamedSizeResolver.__init__(self)
 		self.__mapping = {}
 	
-	def get_size(self, name):
+	def get_size(self, description):
 		"""
-		Resolves this name of a size to an actual size
+		Resolves this description of a size to an actual size
 
-		@param name: The name of the size desired
-		@type name: String
-		@return: Size corresponding to the given name
+		@param description: The name of the size desired
+		@type description: String or list of floats
+		@return: Size corresponding to the given name or floats
 		@rtype: VirtualObjectSize
 		"""
+		if isinstance(description, str):
+			if name in self.__mapping:
+				return self.__mapping[name]
+			else:
+				raise KeyError("No color mapping for that name has been registered")
+		elif isinstance(description, list) or isinstance(description, tuple):
+			return VirtualObjectSize(description)
+		
+		else:
+			raise ValueError("Description must be a String name or list of floats")
 
-		return self.__mapping[name]
-	
 	def add_size(self, name, size):
 		"""
 		Adds a new size to this mapping
@@ -330,6 +407,124 @@ class MappedNamedSizeResolver(NamedSizeResolver):
 		"""
 
 		self.__mapping[name] = size
+
+class NamedObjectResolver:
+	"""
+	Interface / fully abstract class for strategies turning names into VirtualObjects
+	"""
+
+	def get_size(self, name):
+		"""
+		Resolves this name of the desired object to its prototype size
+
+		@param name: The name of the desired object
+		@type name: String
+		@return: Size corresponding to the given name
+		@rtype: String (description) or VirtualObjectSize
+		"""
+
+		raise NotImplementedError("Must use a subclass / implementor of this interface")
+	
+	def get_descriptor(self, name):
+		"""
+		Resolves this name of the desired object to its prototype descriptor
+
+		@param name: The name of the desired object
+		@type name: String
+		@return: Descriptor corresponding to the given name
+		@rtype: String (description)
+		"""
+
+		raise NotImplementedError("Must use a subclass / implementor of this interface")
+	
+	def get_color(self, name):
+		"""
+		Resolves this name of the desired object to its prototype color
+
+		@param name: The name of the desired object
+		@type name: String
+		@return: Color corresponding to the given name
+		@rtype: String (description) or VirtualObjectColor
+		"""
+
+		raise NotImplementedError("Must use a subclass / implementor of this interface")
+
+class ObjectResolverFlyweight:
+	"""
+	Simple structure containing properties for a virtual object prototype
+	"""
+
+	def __init__(self, color, size, descriptor):
+		"""
+		Constructor for ObjectResolverFlyweight
+
+		@param color: The color this object takes on
+		@type color: VirtualObjectColor
+		@param size: The default size for this prototype
+		@type size: VirtualObjectSize
+		@param descriptor: Description of the shape of this object
+		@type descriptor: String
+		"""
+		self.color = color
+		self.size = size
+		self.descriptor = descriptor
+
+class MappedObjectResolver(NamedObjectResolver):
+	""" 
+		Map based implementation of the NamedObjectResolver interface
+	"""
+
+	def __init__(self):
+		NamedSizeResolver.__init__(self)
+		self.__mapping = {}
+	
+	def get_size(self, name):
+		"""
+		Resolves this name of the desired object to its prototype size
+
+		@param name: The name of the desired object
+		@type name: String
+		@return: Size corresponding to the given name
+		@rtype: VirtualObjectSize
+		"""
+
+		return self.__mapping[name].size
+	
+	def get_descriptor(self, name):
+		"""
+		Resolves this name of the desired object to its prototype descriptor
+
+		@param name: The name of the desired object
+		@type name: String
+		@return: Descriptor corresponding to the given name
+		@rtype: String (description)
+		"""
+
+		return self.__mapping[name].descriptor
+	
+	def get_color(self, name):
+		"""
+		Resolves this name of the desired object to its prototype color
+
+		@param name: The name of the desired object
+		@type name: String
+		@return: Color corresponding to the given name
+		@rtype: VirtualObjectColor
+		"""
+
+		return self.__mapping[name].color
+	
+	def add_object(self, name, flyweight):
+		"""
+		Adds a new object to this mapping
+
+		@param name: The name of the object to add
+		@type name: String
+		@param flyweight: ObjectPropertiesFlyweight with information regarding this new mapping
+		@type ObjectResolverFlyweight
+		"""
+
+		self.__mapping[name] = flyweight
 
 class VirtualObjectBuilder:
 	""" 
@@ -396,7 +591,7 @@ class VirtualObjectBuilder:
 		@param name: The name to assign this object
 		@type name: String
 		@param position: The position to give this new object
-		@type position: ObjectPosition
+		@type position: VirtualObjectPosition
 		@return: A new virtual object
 		@rtype: VirtualObject
 

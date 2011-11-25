@@ -11,6 +11,7 @@ import imp
 import configurable
 import loaders
 import structures
+import serializers
 
 class PackageManager:
 	"""
@@ -22,6 +23,7 @@ class PackageManager:
 	    colors: "./openrave_config/colors.yaml"
 	    sizes: "./openrave_config/sizes.yaml"
 	    positions: "./openrave_config/positions.yaml"
+	    prototypes: "./openrave_config/prototypes.yaml
 	    manipulation:
 	        location: "./openrave/manipulation.py"
 	        class: "manipulation.OpenRaveManipulationStrategy"
@@ -40,14 +42,19 @@ class PackageManager:
 	CONSTRUCTION_DESCRIPTOR = "construction"
 	LOCATION_DESCRIPTOR = "location"
 	CLASS_DESCRIPTOR = "class"
+	SETUP_DESCRIPTOR = "setups"
+	ROBOT_DESCRIPTOR = "robots"
+	PROTOTYPES_DESCRIPTOR = "prototypes"
 
-	def __init__(self, configuration_file=None, configuration=None):
+	def __init__(self, language, configuration_file=None, configuration=None):
 		"""
 		Constructor for a PackageManager
 
+		@param language: The name of the language the configuration file or string is written in
+		@type language: String
 		@keyword configuration_file: The location of the configuration file to read inverse kinematic package data from
 		@type configuration_file: String
-		@keyword configuration: YAML encoded string containing configuration information
+		@keyword configuration: Language encoded string containing configuration information
 		@type configuration: String
 		@note: Exactly one of the keywords must be specified
 		"""
@@ -55,28 +62,41 @@ class PackageManager:
 		# Check we are not over specified
 		if configuration_file and configuration:
 			raise ValueError("Only the configuration file or the configuration string should be specified")
-
+		
+		# Save language for later
+		self.__language = language
+		
 		# Get a reader
-		reader = loaders.YamlReaderFactory.get_instance().get_reader()
+		reader = loaders.ConfigReaderFactory.get_instance().get_reader(language)
 
-		# Get a path fixer
-		fixer = PathFixer.get_instance()
-
-		# Read data
+		# If we are using a file
 		if configuration_file:
+
+			self.__using_files = False
+
+			# Get a path fixer
+			fixer = PathFixer.get_instance()
+
+			# Read data
 			self.__data = reader.load(fixer.fix(configuration_file))
+		
+		# If loading from strings
 		elif configuration:
+
+			# Read data
 			self.__data = reader.loads(configuration)
+
+		# Need some more configuration
 		else:
-			raise ValueError("Must specify either a configuration file to load or provide a YAML encoded string")
+			raise ValueError("Pease specify a configuration or configuration file")
 	
-	def get_colors_config_file(self, package_name):
+	def get_colors_config(self, package_name):
 		"""
-		Determines the location of the YAML file for the colors attached to the given package
+		Provides the configuration string defining colors attached to the given package
 
 		@param package_name: The name of the package to look up the color configuration file for
 		@type package_name: String
-		@return: The location of the colors configuration file for the provided package name
+		@return: The colors configuration for the provided package name
 		@rtype: String
 		"""
 		
@@ -85,15 +105,19 @@ class PackageManager:
 		if not PackageManager.COLOR_DESCRIPTOR in entry:
 			raise ValueError("This package does not provide color information")
 		
-		return entry[PackageManager.COLOR_DESCRIPTOR]
+		if self.__using_files:
+			return serializers.ConfigReaderFacade.load(entry[PackageManager.COLOR_DESCRIPTOR], self.__language)
+		
+		else:
+			return serializers.ConfigReaderFacade.loads(entry[PackageManager.COLOR_DESCRIPTOR], self.__language)
 
-	def get_sizes_config_file(self, package_name):
+	def get_sizes_config(self, package_name):
 		"""
-		Determines the location of the YAML file for the named sizes attached to the given package
+		Provides the configuration string defining the named sizes attached to the given package
 
 		@param package_name: The name of the package to look up the sizes configuration file for
 		@type package_name: String
-		@return: The location of the sizes configuration file for the provided package name
+		@return: The sizes configuration for the provided package name
 		@rtype: String
 		"""
 		
@@ -102,15 +126,19 @@ class PackageManager:
 		if not PackageManager.SIZE_DESCRIPTOR in entry:
 			raise ValueError("This package does not provide color information")
 		
-		return entry[PackageManager.SIZE_DESCRIPTOR]
+		if self.__using_files:
+			return serializers.ConfigReaderFacade.load(entry[PackageManager.SIZE_DESCRIPTOR], self.__language)
+		
+		else:
+			return serializers.ConfigReaderFacade.loads(entry[PackageManager.SIZE_DESCRIPTOR], self.__language)
 
-	def get_positions_config_file(self, package_name):
+	def get_positions_config(self, package_name):
 		"""
-		Determines the location of the YAML file for the named positions attached to the given package
+		Provides the configuration string defining the named positions attached to the given package
 
 		@param package_name: The name of the package to look up the named positions configuration file for
 		@type package_name: String
-		@return: The location of the sizes configuration file for the provided package name
+		@return: The sizes configuration for the provided package name
 		@rtype: String
 		"""
 		
@@ -119,7 +147,11 @@ class PackageManager:
 		if not PackageManager.POSITIONS_DESCRIPTOR in entry:
 			raise ValueError("This package does not provide position information")
 		
-		return entry[PackageManager.POSITIONS_DESCRIPTOR]
+		if self.__using_files:
+			return serializers.ConfigReaderFacade.load(entry[PackageManager.POSITIONS_DESCRIPTOR], self.__language)
+		
+		else:
+			return serializers.ConfigReaderFacade.loads(entry[PackageManager.POSITIONS_DESCRIPTOR], self.__language)
 
 	def get_manipulation_source_file(self, package_name):
 		"""
@@ -194,7 +226,67 @@ class PackageManager:
 			raise ValueError("This package does not provide a class name to load")
 		
 		return entry[PackageManager.CONSTRUCTION_DESCRIPTOR][PackageManager.CLASS_DESCRIPTOR]
+
+	def get_setup_config(self, package_name):
+		"""
+		Provides the configuration string defining the named setups attached to the given package
+
+		@param package_name: The name of the package to look up the named setup configuration file for
+		@type package_name: String
+		@return: The setup configurations for the provided package name
+		@rtype: String
+		"""
+		entry = self.__get_package_info(package_name)
+
+		if not PackageManager.SETUP_DESCRIPTOR in entry:
+			raise ValueError("This package does not provide a location for a configuration file for named setups")
+		
+		if self.__using_files:
+			return serializers.ConfigReaderFacade.load(entry[PackageManager.SETUP_DESCRIPTOR], self.__language)
+		
+		else:
+			return serializers.ConfigReaderFacade.loads(entry[PackageManager.SETUP_DESCRIPTOR], self.__language)
+
+	def get_robot_config(self, package_name):
+		"""
+		Provides the configuration string defining the named robots attached to the given package
+
+		@param package_name: The name of the package to look up the named robot configuration file for
+		@type package_name: String
+		@return: The robot configurations for the provided package name
+		@rtype: String
+		"""
+		entry = self.__get_package_info(package_name)
+
+		if not PackageManager.ROBOT_DESCRIPTOR in entry:
+			raise ValueError("This package does not provide a location for a configuration file for robots")
+		
+		if self.__using_files:
+			return serializers.ConfigReaderFacade.load(entry[PackageManager.ROBOT_DESCRIPTOR], self.__language)
+		
+		else:
+			return serializers.ConfigReaderFacade.loads(entry[PackageManager.ROBOT_DESCRIPTOR], self.__language)
 	
+	def get_prototypes_config(self, package_name):
+		"""
+		Provides the configuration string defining the named virtual object prototypes attached to the given package
+
+		@param package_name: The name of the package to look up the named prototypes for
+		@type package_name: String
+		@return: The prototype configurations for the provided package name
+		@rtype: String
+		"""
+		entry = self.__get_package_info(package_name)
+
+		if not PackageManager.PROTOTYPE_DESCRIPTOR in entry:
+			raise ValueError("This package does not provide a location for a configuration file for prototypes")
+		
+		if self.__using_files:
+			return serializers.ConfigReaderFacade.load(entry[PackageManager.PROTOTYPE_DESCRIPTOR], self.__language)
+		
+		else:
+			return serializers.ConfigReaderFacade.loads(entry[PackageManager.PROTOTYPE_DESCRIPTOR], self.__language)
+
 	def __get_package_info(self, package_name):
 
 		if not package_name in self.__data:
@@ -213,10 +305,12 @@ class ObjectManipulationFactory:
 		"""
 		Constructor for an ObjectManipulationFactory
 
+		@param language: The language configuration files are written in
+		@type language: String
 		@param configuration_file: File describing the available inverse kinematics packages
 		@type configuration_file: String file location
 		"""
-		self.__package_manager = PackageManager(configuration_file)
+		self.__package_manager = PackageManager(language, configuration_file)
 	
 	def get_available_manipulation_facade_types(self):
 		"""
@@ -227,28 +321,85 @@ class ObjectManipulationFactory:
 		"""
 		return self.__object_construction_strategies.keys()
 	
-	def create_facade(self, package, color_yaml_location=None, sizes_yaml_location=None, default_positions_yaml_file=None):
+	def create_facade(self, package, language, colors_source = None, colors_file_location=None, sizes_source = None, sizes_file_location=None, positions_source = None, positions_file_location=None, setup_source = None, setup_file_location=None, robot_source = None, robot_file_location=None, prototypes_file_location=None, prototypes_source=None):
 		"""
 		Creates a new ObjectManipulationFacade given the configuration files and packages
 
 		@param package: The name of the software package to target
 		@type package: String
-		@param color_yaml_location: Path to the yaml file containing information about the default named colors to use in building objects
-		@type color_yaml_location: String
-		@param sizes_yaml_location: Path to the yaml file containing information about about the default named sizes to use in building objects
-		@type sizes_yaml_location: String
-		@param default_positions_yaml_file: Path to the yaml file containing information about the default named positions to use in placing objects
-		@type default_positions_yaml_file: String
+		@param language: The language to use to load configuration
+		@type language: String
+		@keyword colors_source: The configuration settings for colors
+		@type colors_sources: String
+		@keyword colors_file_location: Path to the file containing information about the default named colors to use in building objects
+		@type colors_file_location: String
+		@keyword sizes_source: The configuration settings for sizes
+		@type sizes_sources: String
+		@keyword sizes_file_location: Path to the file containing information about about the default named sizes to use in building objects
+		@type sizes_file_location: String
+		@keyword positions_source: The configuration settings for positions
+		@type positions_sources: String
+		@keyword positions_file_location: Path to the file containing information about the default named positions to use in placing objects
+		@type positions_file_location: String
+		@keyword setup_source: The configuration settings for setup
+		@type setup_sources: String
+		@keyword setup_file_location: Path to file describing available setups
+		@type setup_file_location: String
+		@keyword robot_source: The configuration settings for robots
+		@type robot_sources: String
+		@keyword robot_file_location: Path to file describing available robots
+		@type robot_file_location: String
+		@keyword prototypes_file_location: Path to file describing available named virtual object prototypes
+		@type prototypes_file_location: String
+		@keyword prototypes_source: The configuration settings for the named virtual object prototypes to use for this facade
+		@type prototypes_source: String
 		@raise ValueError: Raised if a strategy is requested for a package that has not been adapted or if that adapter has not been registered (see add_object_construction_strategy)
 		"""
+		
+		serializer = serializers.ConfigReaderFacade.get_instance()
 
-		# Load locations as needed
-		if color_yaml_location == None:
-			color_yaml_location = self.__package_manager.get_colors_config_file(package)
-		if sizes_yaml_location == None:
-			sizes_yaml_location = self.__package_manager.get_sizes_config_file(package)
-		if default_positions_yaml_file == None:
-			default_positions_yaml_file = self.__package_manager.get_positions_config_file(package)
+		# Load sources as needed
+		if colors_source != None:
+			colors = serializer.loads(colors_source, language)
+		elif colors_file_location:
+			colors = serializer.load(colors_file_location, language)
+		else:
+			colors = self.__package_manager.get_colors_config(package)
+
+		if sizes_source != None:
+			sizes = serializer.loads(sizes_source, language)
+		elif sizes_file_location:
+			sizes = serializer.load(sizes_file_location, language)
+		else:
+			sizes = self.__package_manager.get_sizes_config(package)
+
+		if positions_source != None:
+			positions = serializer.loads(positions_source, language)
+		elif positions_file_location:
+			positions = serializer.load(positions_file_location, language)
+		else:
+			positions = self.__package_manager.get_positions_config(package)
+
+		if setup_source_source != None:
+			setup_source = serializer.loads(setup_source, language)
+		elif setup_file_location:
+			setup_source = serializer.load(setup_file_location, language)
+		else:
+			setup_source = self.__package_manager.get_setup_config(package)
+
+		if robot_source_source != None:
+			robot_source = serializer.loads(robot_source, language)
+		elif robot_file_location:
+			robot_source = serializer.load(robot_file_location, language)
+		else:
+			robot_source = self.__package_manager.get_robot_config(package)
+		
+		if prototypes_source != None:
+			prototypes_source = serializer.loads(prototypes_source, language)
+		elif prototypes_file_location:
+			prototypes_source = serializer.load(prototypes_file_location)
+		else:
+			prototypes_source = self.__package_manager.get_prototypes_config(package)
 
 		# Load construction and manipulation objects
 		construction_module =  self.__package_manager.get_construction_class_name(package)
@@ -259,79 +410,64 @@ class ObjectManipulationFactory:
 		manipulation_path =  self.__package_manager.get_manipulation_source_file(package)
 		manipulation_strategy = imp.load_source(manipulation_module, manipulation_path)
 
-		# Read from configuration files
-		colors = self.__read_from_yaml_file(color_yaml_location)
-		sizes = self.__read_from_yaml_file(sizes_yaml_location)
-		positions = self.__read_from_yaml_file(default_positions_yaml_file)
-
 		# Create strategies
-		color_strategy = configurable.MappedColorResolutionFactory.get_instance().create_strategy(colors)
-		size_strategy = configurable.MappedNamedSizeResolverFactory.get_instance().create_resolver(sizes)
+		color_strategy = configurable.ComplexColorResolutionFactory.get_instance().create_strategy(colors)
+		size_strategy = configurable.ComplexNamedSizeResolverFactory.get_instance().create_resolver(sizes)
 		position_strategy = configurable.ObjectPositionFactoryConstructor.get_instance().create_factory(positions)
-		
+		object_strategy = configurable.MappedObjectResolverFactory.get_instance().create_resolver(prototypes_source, size_strategy, color_strategy)
+
 		# Create builder
 		builder = virtualobject.VirtualObjectBuilder(construction_strategy, size_strategy_color_strategy)
+		
+		# Create setups and robots
+		setups = serializers.SetupSerializer.get_instance().list_from_dict(setup_source)
+		robots = serializers.RobotSerializer.get_instance().list_from_dict(robot_source)
 
-		return ObjectManipulationFacade(builder, manipulation_strategy, color_strategy, size_strategy, position_strategy)
+		# Make managers of setups and robots
+		setup_manager = experiment.SetupManager(setups)
+		robot_manager = experiment.RobotManager(robots)
 
-	def __read_from_yaml_file(self, target):
-		"""
-		Helper function to read and convert the contents of a YAML file
+		return ObjectManipulationFacade(language, builder, manipulation_strategy, color_strategy, size_strategy, position_strategy, setup_manager, robot_manager, object_strategy)
 
-		@param target: Path to the file to read
-		@type target: String
-		"""
-		reader = loaders.YamlReaderFactory.get_instance().get_reader()
-		fixer = loaders.PathFixer.get_instance()
-		return reader.load(fixer.fix(target))
-
+# TODO: Docs and exceptions
 class VirtualObjectManipulationStrategy:
-	pass
 
-	def update(self, target):
+	def refresh(self, target):
 		pass
 	
 	def grab(self, target):
 		pass
 	
 	def face(self, target):
+		pass 
+	
+	def update(self, target, position):
 		pass
-	
-	def  
 
-class ObjectManipulationFacade:
+class ExternalObjectBuilder:
 	"""
-	Driver for management and manipulation of virutal objects
-
-	Facade that drives the creation of new and manipulation of existing objects in an inverse kinematics package
-	
-	@note: Should not be created directly. Use an ObjectManipulationFactory to construct.
+	User facing bridge component for the creation of virtual objects
 	"""
 
-	def __init__(self, object_builder, manipulation_strategy, color_resolution_strategy, named_size_resolver, object_position_factory):
+	def __init__(self, inner_builder, object_strategy, position_strategy, facade):
 		"""
-		Constructor for ObjectManipulationFacade
+		Creates a new builder to wrap the internal builder
 
-		@param object_builder: The strategy to use to create new package-specific objects
-		@type object_builder: VirtualObjectBuilder
-		@param manipulation_strategy: The strategy to use to actually move objects within the package
-		@type manipulation_strategy: VirtualObjectManipulationStrategy
-		@param color_resolution_strategy: The strategy to resolve colors for names
-		@type color_resolution_strategy: ColorResolutionStrategy
-		@param named_size_resolver: The strategy to use to resolve names of sizes to actual sizes
-		@type named_size_resolver: NamedSizeResolver
-		@param object_position_factory: Factory to create positions
-		@type object_position_factory: ObjectPositionFactory
+		@param inner_builder: The builder to wrap with this ObjectBuilder
+		@type inner_builder: VirtualObjectBuilder
+		@param object_strategy: Strategy to resolve named object prototypes
+		@type object_strategy: NamedObjectResolver implementor
+		@param position_strategy: The strategy used to change names of positions to actual positions
+		@type position_strategy: ObjectPositionFactory
+		@param facade: The facade this builder will register objects with
+		@type facade: ObjectManipulationFacade
 		"""
-
-		self.__object_builder = object_builder
-		self.__manipulation_strategy = manipulation_strategy
-		self.__color_resolution_strategy = color_resolution_strategy
-		self.__named_size_resolver = named_size_resolver
-		self.__object_position_factory = object_position_factory
 		self.__descriptor_set = False
-		self.__virtual_objects = structures.DictionarySet()
-	
+		self.__object_builder = inner_builder
+		self.__object_strategy = object_strategy
+		self.__target_facade = facade
+		self.__position_strategy = position_strategy
+
 	def set_new_descriptor(self, descriptor):
 		"""
 		Sets the descriptor of the next object and following objects to be created
@@ -388,23 +524,106 @@ class ObjectManipulationFacade:
 		@type name: String
 		@param position: The place to put this new object and its orientaiton
 		@type position: String (named prefabricated position) or ObjectPosition
+		@return: The new object for simulation
+		@rtype: VirtualObject
 		"""
+
+		# Resolve position
+		if isinstance(position, str):
+			position = self.__position_strategy.create_prefabricated(position)
+		elif not isinstance(position, VirtualObjectPosition):
+			raise ValueError("Expected position to be a name of a prefabricated position or an instance of VirtualObjectPosition")
 		
+		# TODO: This makes me a bit uneasy
 		new_object = self.__object_builder.create(name, position)
-		self.__virtual_objects[name] = new_object
+		self.__target_facade.add_object(new_object)
+		return new_object
 	
-	def get_objects(self, update=False):
+	def load_from_config(self, name):
+		"""
+		Loads an object prototype from configuration files
+
+		@param name: The name of the prototype to load
+		@type name: String
+		"""
+		descriptor = self.__object_strategy.get_descriptor(name)
+		size = self.__object_strategy.get_size(name)
+		color = self.__object_strategy.get_color(name)
+		
+		self.set_new_descriptor(descriptor)
+		self.set_new_size(size)
+		self.set_new_color(color)
+
+class ObjectManipulationFacade:
+	"""
+	Driver for management and manipulation of virutal objects
+
+	Facade that drives the creation of new and manipulation of existing objects in an inverse kinematics package
+	
+	@note: Should not be created directly. Use an ObjectManipulationFactory to construct.
+	"""
+
+	def __init__(self, object_builder, manipulation_strategy, color_resolution_strategy, named_size_resolver, object_position_factory, setup_manager, robot_manager, object_strategy):
+		"""
+		Constructor for ObjectManipulationFacade
+
+		@param object_builder: The strategy to use to create new package-specific objects
+		@type object_builder: VirtualObjectBuilder
+		@param manipulation_strategy: The strategy to use to actually move objects within the package
+		@type manipulation_strategy: VirtualObjectManipulationStrategy
+		@param color_resolution_strategy: The strategy to resolve colors for names
+		@type color_resolution_strategy: ColorResolutionStrategy
+		@param named_size_resolver: The strategy to use to resolve names of sizes to actual sizes
+		@type named_size_resolver: NamedSizeResolver
+		@param object_position_factory: Factory to create positions
+		@type object_position_factory: ObjectPositionFactory
+		@param setup_manager: Manager of setups
+		@type setup_manager: SetupManager
+		@param robot_manager: Manager of potential robots for this facade
+		@type robot_manager: RobotManager
+		@param object_strategy: Strategy for the resolution of names to virtual object prototypes
+		@type object_strategy: NamedObjectResolver implementor
+		"""
+
+		self.__manipulation_strategy = manipulation_strategy
+		self.__internal_object_builder = object_builder
+		self.__external_facing_object_builder = None
+		self.__color_resolution_strategy = color_resolution_strategy
+		self.__named_size_resolver = named_size_resolver
+		self.__object_position_factory = object_position_factory
+		self.__virtual_objects = structures.DictionarySet()
+		self.__setup_manager = setup_manager
+		self.__robot_manager = robot_manager
+		self.__object_strategy = object_strategy
+	
+	def get_object_builder(self):
+		""" Return a common builder for this factory """
+		if not self.__external_facing_object_builder:
+			self.__external_facing_object_builder = ExternalObjectBuilder(self.__internal_object_builder, self.__object_strategy, self)
+		
+		return self.__external_facing_object_builder
+	
+	def add_object(self, new_object):
+		"""
+		Has this facade track the given VirtualObject
+
+		@param new_object: The new object to have this facade track
+		@type new_object: VirtualObject
+		"""
+		self.__virtual_objects[new_object.get_name()] = new_object
+	
+	def get_objects(self, update=True):
 		"""
 		Returns a list of all of the object Haikw is aware of in the target simulation 
 
-		@keyword update: If True, all the object's positions will be updated before returned. Otherwise will return position from last check. Defaults to False.
+		@keyword update: If True, all the object's positions will be updated before returned. Otherwise will return position from last check. Defaults to True.
 		@type update: bool
 		"""
 		if update:
 			ret_val = []
 			for name in self.__virtual_objects.keys():
 				orig = self.__virtual_objects[name]
-				updated = self.update(orig)
+				updated = self.refresh(orig)
 				self.__virtual_objects[name] = updated
 				ret_val.append(updated)
 		else:
@@ -412,9 +631,51 @@ class ObjectManipulationFacade:
 		
 		return ret_val
 	
-	def update(self, target):
+	def get_object(self, name, update=True):
 		"""
-		Finds the updated state of a given VirtualObject
+		Returns the object with the given name
+
+		@param name: The name of the object to read from the simulation
+		@type name: String
+		@return: The current state of the requested object
+		@rtype: VirtualObject
+		"""
+		if not name in self.__virtual_objects:
+			raise KeyError("No objects by that name have been registered in this simulation")
+		
+		ret_val = self.__virtual_objects[name]
+
+		if update:
+			ret_val = self.refresh(ret_val)
+		
+		return ret_val
+	
+	def update(self, target, position):
+		"""
+		Updates this object in the simulation, giving it the provided position
+
+		@param target: The object to update in the simulation
+		@type target: String (name) or VirtualObject
+		@param position: The position to put this object at
+		@type position: VirtualObjectPosition or String (name)
+		"""
+		# Resolve target
+		if isinstance(target, str):
+			target = self.get_object(target, False)
+		elif not isinstance(target, VirtualObject):
+			raise ValueError("Target must be the string name of a simulated object or a VirtualObject instance")
+		
+		# Resolve position
+		if isinstance(position, str):
+			position = self.__object_position_factory.create_prefabricated(position)
+		elif not isinstance(position, VirtualObjectPosition):
+			raise ValueError("Expected position to be a VirtualObjectPosition instance or String name corresponding to position from a config file")
+		
+		self.__manipulation_strategy.update(target, position)
+	
+	def refresh(self, target):
+		"""
+		Gets the updated state of a given VirtualObject
 
 		@param target: The object to find the updated state for
 		@target target: VirtualObject
@@ -468,3 +729,5 @@ class ObjectManipulationFacade:
 		@type part: RobotPart 
 		"""
 		self.face(self.__virtual_objects[name])
+
+	# TODO: Place relative, set_new_prototype, 

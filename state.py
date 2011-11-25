@@ -9,17 +9,17 @@ This module provides state containing objects that manage state inherent to inve
 @organization: Andrews Robotics Initiative at CU Boulder
 """
 
-class ObjectPosition:
+class VirtualObjectPosition:
 	"""
 	Immutable generic position / orientation flyweight in an inverse kinematics simulation
 
 	Package independent representation of a position and orientation in the target inverse kinematics software
 
-	@note: Should be created through an ObjectPositionFactory
+	@note: Should be created through an VirtualObjectPositionFactory
 	"""
 
 	def __init__(x, y, z, roll, pitch, yaw):
-		""" Default constructor for an ObjectPosition
+		""" Default constructor for an VirtualObjectPosition
 
 		@param x: The x component of this position
 		@type x: float
@@ -91,17 +91,17 @@ class ObjectPosition:
 
 
 
-class ObjectPositionFactory:
+class VirtualObjectPositionFactory:
 	"""
-	Factory to create ObjectPositions that leverages predefined names, defaults, and other conveniences.
+	Factory to create VirtualObjectPositions that leverages predefined names, defaults, and other conveniences.
 
-	@note: Should be created through an ObjectManipulationFacade and its ObjectPositionFactoryConstructor
+	@note: Should be created through an ObjectManipulationFacade and its VirtualObjectPositionFactoryConstructor
 	"""
 
 	DEFAULT = None
 	
 	def __init__(self, default_roll, default_pitch, default_yaw, prefabricated_positions):
-		""" Constructor for an ObjectPositionFactory
+		""" Constructor for an VirtualObjectPositionFactory
 		
 		@param default_roll: The default roll applied to new positions
 		@type default_roll: float
@@ -110,14 +110,14 @@ class ObjectPositionFactory:
 		@param default_yaw: The default yaw applied to new positions
 		@type default_yaw: float
 		@param prefabricated_positions: Named default positions
-		@type prefabricated_positions: Dictionary of String to ObjectPosition"""
+		@type prefabricated_positions: Dictionary of String to VirtualObjectPosition"""
 
 		self.__default_roll = default_roll
 		self.__default_pitch = default_pitch
 		self.__default_yaw = default_yaw
 		self.__prefabricated_positions = prefabricated_positions
 	
-	def create_position(self, x, y, z, roll=ObjectPositionFactory.DEFAULT, pitch=ObjectPositionFactory.DEFAULT, yaw=ObjectPositionFactory.DEFAULT):
+	def create_position(self, x, y, z, roll=VirtualObjectPositionFactory.DEFAULT, pitch=VirtualObjectPositionFactory.DEFAULT, yaw=VirtualObjectPositionFactory.DEFAULT):
 
 		""" Creates a new position by values
 
@@ -134,21 +134,21 @@ class ObjectPositionFactory:
 		@keyword yaw: The yaw component of this new orientation, defaults to the yaw provided in init
 		@type: yaw: float 
 		@return: New position that fits the provided parameters
-		@type: ObjectPosition"""
+		@type: VirtualObjectPosition"""
 
 		# Resolve defaults
-		if roll == ObjectPosition.DEFAULT:
+		if roll == VirtualObjectPosition.DEFAULT:
 			roll = self.__default_roll
 
-		if pitch == ObjectPosition.DEFAULT:
+		if pitch == VirtualObjectPosition.DEFAULT:
 			pitch = self.__default_pitch
 
-		if yaw == ObjectPosition.DEFAULT:
+		if yaw == VirtualObjectPosition.DEFAULT:
 			yaw = self.__default_yaw
 		
-		return ObjectPosition(x, y, z, roll, pitch, yaw)
+		return VirtualObjectPosition(x, y, z, roll, pitch, yaw)
 	
-	def create_prefabricated(name, x=ObjectPositionFactory.DEFAULT, y=ObjectPositionFactory.DEFAULT, z=ObjectPositionFactory.DEFAULT, roll=ObjectPositionFactory.DEFAULT, pitch=ObjectPositionFactory.DEFAULT, yaw=ObjectPositionFactory.DEFAULT):
+	def create_prefabricated(name, x=VirtualObjectPositionFactory.DEFAULT, y=VirtualObjectPositionFactory.DEFAULT, z=VirtualObjectPositionFactory.DEFAULT, roll=VirtualObjectPositionFactory.DEFAULT, pitch=VirtualObjectPositionFactory.DEFAULT, yaw=VirtualObjectPositionFactory.DEFAULT):
 		""" Creates a new position based off of the named prefabricated position
 			
 		@param name: The name of the prefabrication to base this new position off of
@@ -175,11 +175,11 @@ class ObjectPositionFactory:
 
 		return self.clone(position, x, y, z, roll, pitch, yaw)
 		
-	def clone(position, x=ObjectPositionFactory.DEFAULT, y=ObjectPositionFactory.DEFAULT, z=ObjectPositionFactory.DEFAULT, roll=ObjectPositionFactory.DEFAULT, pitch=ObjectPositionFactory.DEFAULT, yaw=ObjectPositionFactory.DEFAULT):
+	def clone(position, x=VirtualObjectPositionFactory.DEFAULT, y=VirtualObjectPositionFactory.DEFAULT, z=VirtualObjectPositionFactory.DEFAULT, roll=VirtualObjectPositionFactory.DEFAULT, pitch=VirtualObjectPositionFactory.DEFAULT, yaw=VirtualObjectPositionFactory.DEFAULT):
 		""" Creates a new position based off of the given position 
 
 		@param position: The position to base the new position off of
-		@type: ObjectPosition
+		@type: VirtualObjectPosition
 		@keyword x: Specifies the x component of the new position, defaults to the x position specified in the position provided to clone
 		@type x: float
 		@keyword y: Specifies the y component of the new position, defaults to the y position specified in the position provided to clone
@@ -193,31 +193,31 @@ class ObjectPositionFactory:
 		@keyword yaw: Specifies the yaw of the new orientation, defaults to the yaw specified in the position provided to clone
 		@type yaw: float """
 
-		if x == ObjectPositionFactory.DEFAULT:
+		if x == VirtualObjectPositionFactory.DEFAULT:
 			x = position.get_x()
 		
-		if y == ObjectPositionFactory.DEFAULT:
+		if y == VirtualObjectPositionFactory.DEFAULT:
 			y = position.get_y()
 		
-		if z == ObjectPositionFactory.DEFAULT:
+		if z == VirtualObjectPositionFactory.DEFAULT:
 			z = position.get_z()
 
-		if roll == ObjectPositionFactory.DEFAULT:
+		if roll == VirtualObjectPositionFactory.DEFAULT:
 			roll = position.get_roll()
 		
-		if pitch == ObjectPositionFactory.DEFAULT:
+		if pitch == VirtualObjectPositionFactory.DEFAULT:
 			pitch = position.get_pitch()
 		
-		if yaw == ObjectPositionFactory.DEFAULT:
+		if yaw == VirtualObjectPositionFactory.DEFAULT:
 			yaw = position.get_yaw()
 		
-		return ObjectPosition(x, y, z, roll, pitch, yaw)
+		return VirtualObjectPosition(x, y, z, roll, pitch, yaw)
 	
-	def create_position_relative(position, x, y, z, roll=ObjectPositionFactory.DEFAULT, pitch=ObjectPositionFactory.DEFAULT, yaw=ObjectPositionFactory.DEFAULT):
+	def create_position_relative(position, x, y, z, roll=VirtualObjectPositionFactory.DEFAULT, pitch=VirtualObjectPositionFactory.DEFAULT, yaw=VirtualObjectPositionFactory.DEFAULT):
 		""" Creates a new position based off of the given position 
 
 		@param position: The position to base the new position off of
-		@type: ObjectPosition
+		@type: VirtualObjectPosition
 		@param x: Specifies the x component of the new position, computed relative to the provided existing position
 		@type x: float
 		@param y: Specifies the y component of the new position, computed relative to the provided existing position
@@ -232,13 +232,13 @@ class ObjectPositionFactory:
 		@type yaw: float """
 
 		# Resolve defaults
-		if roll == ObjectPosition.DEFAULT:
+		if roll == VirtualObjectPosition.DEFAULT:
 			roll = self.__default_roll
 
-		if pitch == ObjectPosition.DEFAULT:
+		if pitch == VirtualObjectPosition.DEFAULT:
 			pitch = self.__default_pitch
 
-		if yaw == ObjectPosition.DEFAULT:
+		if yaw == VirtualObjectPosition.DEFAULT:
 			yaw = self.__default_yaw
 		
 		# Compute relative values
@@ -249,4 +249,4 @@ class ObjectPositionFactory:
 		pitch = pitch + position.get_pitch()
 		yaw = yaw + position.get_yaw()
 
-		return ObjectPosition(x, y, z, roll, pitch, yaw)
+		return VirtualObjectPosition(x, y, z, roll, pitch, yaw)
