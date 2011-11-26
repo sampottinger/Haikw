@@ -80,21 +80,9 @@ class ConfigReader:
 	@note: This is fully abstract. Client code should use a subclass. 
 	"""
 
-	__instance = None
-
-	@classmethod
-	def get_instance(self):
-		"""
-		Returns a shared instance of this ConfigReader
-
-		@return: Shared instance of ConfigReader
-		@rtype: ConfigReader
-		"""
-		raise NotImplementedError("Must use a subclass / implementor of this interface")
-
 	def __init__(self):
-		raise NotImplementedError("Must use a subclass / implementor of this interface")
-	
+		pass
+
 	def load(self, src):
 		"""
 		Converts the provided encoded file to Python native objects
@@ -138,7 +126,7 @@ class PyYamlAdapter(ConfigReader):
 		return PyYamlAdapter.__instance
 
 	def __init__(self):
-		YamlReader.__init__(self)
+		ConfigReader.__init__(self)
 	
 	def loads(self, string):
 		""" 
@@ -149,7 +137,7 @@ class PyYamlAdapter(ConfigReader):
 		@return: Converted Python values
 		@rtype: Python objects
 		"""
-		yaml.load(string)
+		return yaml.load(string)
 	
 	def load(self, src):
 		"""

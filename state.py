@@ -18,7 +18,7 @@ class VirtualObjectPosition:
 	@note: Should be created through an VirtualObjectPositionFactory
 	"""
 
-	def __init__(x, y, z, roll, pitch, yaw):
+	def __init__(self, x, y, z, roll, pitch, yaw):
 		""" Default constructor for an VirtualObjectPosition
 
 		@param x: The x component of this position
@@ -41,7 +41,7 @@ class VirtualObjectPosition:
 		self.__pitch = pitch
 		self.__yaw = yaw
 	
-	def get_x():
+	def get_x(self):
 		""" Determine's this position's x component
 
 		@return: This position's x component
@@ -49,7 +49,7 @@ class VirtualObjectPosition:
 
 		return self.__x
 	
-	def get_y():
+	def get_y(self):
 		""" Determine's this position's y component
 
 		@return: This position's y component
@@ -57,7 +57,7 @@ class VirtualObjectPosition:
 
 		return self.__y
 	
-	def get_z():
+	def get_z(self):
 		""" Determine's this position's z component
 
 		@return: This position's z component
@@ -65,7 +65,7 @@ class VirtualObjectPosition:
 
 		return self.__z
 	
-	def get_roll():
+	def get_roll(self):
 		""" Determine's this orientations's x component (roll)
 
 		@return: This orientation's roll
@@ -73,7 +73,7 @@ class VirtualObjectPosition:
 
 		return self.__roll
 	
-	def get_pitch():
+	def get_pitch(self):
 		""" Determine's this orientations's y component (pitch)
 
 		@return: This orientation's pitch
@@ -81,7 +81,7 @@ class VirtualObjectPosition:
 
 		return self.__pitch
 	
-	def get_yaw():
+	def get_yaw(self):
 		""" Determine's this orientations's z component (yaw)
 
 		@return: This orientation's yaw
@@ -117,7 +117,7 @@ class VirtualObjectPositionFactory:
 		self.__default_yaw = default_yaw
 		self.__prefabricated_positions = prefabricated_positions
 	
-	def create_position(self, x, y, z, roll=VirtualObjectPositionFactory.DEFAULT, pitch=VirtualObjectPositionFactory.DEFAULT, yaw=VirtualObjectPositionFactory.DEFAULT):
+	def create_position(self, x, y, z, roll=None, pitch=None, yaw=None):
 
 		""" Creates a new position by values
 
@@ -148,7 +148,7 @@ class VirtualObjectPositionFactory:
 		
 		return VirtualObjectPosition(x, y, z, roll, pitch, yaw)
 	
-	def create_prefabricated(name, x=VirtualObjectPositionFactory.DEFAULT, y=VirtualObjectPositionFactory.DEFAULT, z=VirtualObjectPositionFactory.DEFAULT, roll=VirtualObjectPositionFactory.DEFAULT, pitch=VirtualObjectPositionFactory.DEFAULT, yaw=VirtualObjectPositionFactory.DEFAULT):
+	def create_prefabricated(name, x=None, y=None, z=None, roll=None, pitch=None, yaw=None):
 		""" Creates a new position based off of the named prefabricated position
 			
 		@param name: The name of the prefabrication to base this new position off of
@@ -175,7 +175,7 @@ class VirtualObjectPositionFactory:
 
 		return self.clone(position, x, y, z, roll, pitch, yaw)
 		
-	def clone(position, x=VirtualObjectPositionFactory.DEFAULT, y=VirtualObjectPositionFactory.DEFAULT, z=VirtualObjectPositionFactory.DEFAULT, roll=VirtualObjectPositionFactory.DEFAULT, pitch=VirtualObjectPositionFactory.DEFAULT, yaw=VirtualObjectPositionFactory.DEFAULT):
+	def clone(position, x=None, y=None, z=None, roll=None, pitch=None, yaw=None):
 		""" Creates a new position based off of the given position 
 
 		@param position: The position to base the new position off of
@@ -213,7 +213,7 @@ class VirtualObjectPositionFactory:
 		
 		return VirtualObjectPosition(x, y, z, roll, pitch, yaw)
 	
-	def create_position_relative(position, x, y, z, roll=VirtualObjectPositionFactory.DEFAULT, pitch=VirtualObjectPositionFactory.DEFAULT, yaw=VirtualObjectPositionFactory.DEFAULT):
+	def create_position_relative(position, x, y, z, roll=None, pitch=None, yaw=None):
 		""" Creates a new position based off of the given position 
 
 		@param position: The position to base the new position off of

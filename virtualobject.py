@@ -9,6 +9,8 @@ This module provides management for objects simulated in the target inverse kine
 @organization: Andrews Robotics Initiative at CU Boulder
 """
 
+import re
+
 class VirtualObject:
 	"""
 	Simple temporary immutable state of a simulated object
@@ -98,22 +100,22 @@ class VirtualObjectColor:
 		"""
 
 		# Verify ranges
-		if r >= 0 && r <= 255:
+		if r >= 0 and r <= 255:
 			self.__r = r
 		else:
 			raise ValueError("Invalid value for the provided red value (must be between 0 and 255)")
 
-		if g >= 0 && g <= 255:
+		if g >= 0 and g <= 255:
 			self.__g = g
 		else:
 			raise ValueError("Invalid value for the provided green value (must be between 0 and 255)")
 
-		if b >= 0 && b <= 255:
+		if b >= 0 and b <= 255:
 			self.__b = b
 		else:
 			raise ValueError("Invalid value for the provided blue value (must be between 0 and 255)")
 	
-	def get_red():
+	def get_red(self):
 		""" Get the red coponent of this color
 
 		@return: The red component of this color
@@ -122,7 +124,7 @@ class VirtualObjectColor:
 
 		return self.__r
 
-	def get_green():
+	def get_green(self):
 		""" Get the green coponent of this color
 
 		@return: The green component of this color
@@ -131,7 +133,7 @@ class VirtualObjectColor:
 
 		return self.__g
 		
-	def get_blue():
+	def get_blue(self):
 		""" Get the blue coponent of this color
 
 		@return: The blue component of this color
@@ -213,9 +215,9 @@ class ComplexColorResolutionStrategy(ColorResolutionStrategy):
 			# Hex description resolver
 			if description[0] == "#":
 				if self.__hex_regex == None:
-					self.__hex_regex = re.compile("\#(?P=<red>\d{2})(?P=<blue>\d{2})(?P=<green>\d{2})")
+					self.__hex_regex = re.compile("\#(?P<red>[\dA-F]{2})(?P<green>[\dA-F]{2})(?P<blue>[\dA-F]{2})")
 
-				match = self.__hex_regex.match(color)
+				match = self.__hex_regex.match(description)
 
 				if match == None:
 					raise ValueError("Invalid color value, need #rrggbb, name, or individual components")
@@ -233,12 +235,12 @@ class ComplexColorResolutionStrategy(ColorResolutionStrategy):
 				raise ValueError("Must be a hex description #rrggbb or name corresponding to a registered color. This string resolved to neither")
 		
 		# Components
-		else isinstance(description, dict):
+		elif isinstance(description, dict):
 
 			# Extract red
-			if not ComplexColorResolutionStrategy.RED in color:
+			if not ComplexColorResolutionStrategy.RED in description:
 				raise ValueError("Red not specified for this color")
-			red = color[ComplexColorResolutionStrategy.RED]
+			red = description[ComplexColorResolutionStrategy.RED]
 
 			if not isinstance(red, int):
 				raise ValueError("The value for red was not given as a base 10 integer")
@@ -248,9 +250,9 @@ class ComplexColorResolutionStrategy(ColorResolutionStrategy):
 
 			
 			# Extract blue
-			if not ComplexColorResolutionStrategy.BLUE in color:
+			if not ComplexColorResolutionStrategy.BLUE in description:
 				raise ValueError("Blue not specified for this color")
-			blue = color[ComplexColorResolutionStrategy.BLUE]
+			blue = description[ComplexColorResolutionStrategy.BLUE]
 
 			if not isinstance(blue, int):
 				raise ValueError("The value for blue was not given as a base 10 integer")
@@ -260,9 +262,9 @@ class ComplexColorResolutionStrategy(ColorResolutionStrategy):
 
 			
 			# Extract green
-			if not ComplexColorResolutionStrategy.GREEN in color:
+			if not ComplexColorResolutionStrategy.GREEN in description:
 				raise ValueError("Green not specified for this color")
-			green = color[ComplexColorResolutionStrategy.GREEN]
+			green = description[ComplexColorResolutionStrategy.GREEN]
 
 			if not isinstance(green, int):
 				raise ValueError("The value for green was not given as a base 10 integer")
@@ -355,6 +357,9 @@ class NamedSizeResolver:
 	Interface / fully abstract parent class for strategies for turning names or list of floats into sizes
 	"""
 
+	def __init__(self):
+		pass
+
 	def get_size(self, name):
 		"""
 		Resolves this name of a size to an actual size
@@ -386,13 +391,12 @@ class ComplexNamedSizeResolver(NamedSizeResolver):
 		@rtype: VirtualObjectSize
 		"""
 		if isinstance(description, str):
-			if name in self.__mapping:
-				return self.__mapping[name]
+			if description in self.__mapping:
+				return self.__mapping[description]
 			else:
 				raise KeyError("No color mapping for that name has been registered")
 		elif isinstance(description, list) or isinstance(description, tuple):
 			return VirtualObjectSize(description)
-		
 		else:
 			raise ValueError("Description must be a String name or list of floats")
 
@@ -412,6 +416,9 @@ class NamedObjectResolver:
 	"""
 	Interface / fully abstract class for strategies turning names into VirtualObjects
 	"""
+
+	def __init__(self):
+		pass
 
 	def get_size(self, name):
 		"""
@@ -465,6 +472,14 @@ class ObjectResolverFlyweight:
 		@param descriptor: Description of the shape of this object
 		@type descriptor: String
 		"""
+		# Double check types
+		if not isinstance(color, VirtualObjectColor):
+			raise TypeError("Expecting VirtualObjectColor for color")
+		if not isinstance(size, VirtualObjectSize):
+			raise TypeError("Expecting VirtualObjectSize for size")
+		if not isinstance(descriptor, str):
+			raise TypeError("Expecting descriptor to be a string")
+
 		self.color = color
 		self.size = size
 		self.descriptor = descriptor
@@ -475,7 +490,7 @@ class MappedObjectResolver(NamedObjectResolver):
 	"""
 
 	def __init__(self):
-		NamedSizeResolver.__init__(self)
+		NamedObjectResolver.__init__(self)
 		self.__mapping = {}
 	
 	def get_size(self, name):
@@ -487,6 +502,8 @@ class MappedObjectResolver(NamedObjectResolver):
 		@return: Size corresponding to the given name
 		@rtype: VirtualObjectSize
 		"""
+		if not name in self.__mapping:
+			raise KeyError("This named object has not been registered in this resolver.")
 
 		return self.__mapping[name].size
 	
@@ -499,6 +516,8 @@ class MappedObjectResolver(NamedObjectResolver):
 		@return: Descriptor corresponding to the given name
 		@rtype: String (description)
 		"""
+		if not name in self.__mapping:
+			raise KeyError("This named object has not been registered in this resolver.")
 
 		return self.__mapping[name].descriptor
 	
@@ -511,6 +530,8 @@ class MappedObjectResolver(NamedObjectResolver):
 		@return: Color corresponding to the given name
 		@rtype: VirtualObjectColor
 		"""
+		if not name in self.__mapping:
+			raise KeyError("This named object has not been registered in this resolver.")
 
 		return self.__mapping[name].color
 	
@@ -523,7 +544,6 @@ class MappedObjectResolver(NamedObjectResolver):
 		@param flyweight: ObjectPropertiesFlyweight with information regarding this new mapping
 		@type ObjectResolverFlyweight
 		"""
-
 		self.__mapping[name] = flyweight
 
 class VirtualObjectBuilder:
@@ -531,7 +551,7 @@ class VirtualObjectBuilder:
 	Creates virtual objects for a given inverse kinematics package
 
 	@note: This should be created and accessed through an ObjectManipulationFacade
-	"""
+	""" 
 
 	NOT_SPECIFIED = None
 

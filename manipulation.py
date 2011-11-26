@@ -10,7 +10,6 @@ import os
 import imp
 import configurable
 import loaders
-import structures
 import serializers
 
 class PackageManager:
@@ -44,7 +43,7 @@ class PackageManager:
 	CLASS_DESCRIPTOR = "class"
 	SETUP_DESCRIPTOR = "setups"
 	ROBOT_DESCRIPTOR = "robots"
-	PROTOTYPES_DESCRIPTOR = "prototypes"
+	PROTOTYPE_DESCRIPTOR = "prototypes"
 
 	def __init__(self, language, configuration_file=None, configuration=None):
 		"""
@@ -72,10 +71,10 @@ class PackageManager:
 		# If we are using a file
 		if configuration_file:
 
-			self.__using_files = False
+			self.__using_files = True
 
 			# Get a path fixer
-			fixer = PathFixer.get_instance()
+			fixer = loaders.PathFixer.get_instance()
 
 			# Read data
 			self.__data = self.__reader.load(fixer.fix(configuration_file))
@@ -83,21 +82,23 @@ class PackageManager:
 		# If loading from strings
 		elif configuration:
 
+			self.__using_files = False
+
 			# Read data
 			self.__data = self.__reader.loads(configuration)
 
 		# Need some more configuration
 		else:
-			raise ValueError("Pease specify a configuration or configuration file")
+			raise ValueError("Please specify a configuration or configuration file")
 	
 	def get_colors_config(self, package_name):
 		"""
-		Provides the configuration string defining colors attached to the given package
+		Provides the configuration defining colors attached to the given package
 
 		@param package_name: The name of the package to look up the color configuration file for
 		@type package_name: String
 		@return: The colors configuration for the provided package name
-		@rtype: String
+		@rtype: Dict
 		"""
 		
 		entry = self.__get_package_info(package_name)
@@ -106,19 +107,19 @@ class PackageManager:
 			raise ValueError("This package does not provide color information")
 		
 		if self.__using_files:
-			return self.__reader.load(entry[PackageManager.COLOR_DESCRIPTOR], self.__language)
+			return self.__reader.load(entry[PackageManager.COLOR_DESCRIPTOR])
 		
 		else:
-			return self.__reader.loads(entry[PackageManager.COLOR_DESCRIPTOR], self.__language)
+			return entry[PackageManager.COLOR_DESCRIPTOR]
 
 	def get_sizes_config(self, package_name):
 		"""
-		Provides the configuration string defining the named sizes attached to the given package
+		Provides the configuration defining the named sizes attached to the given package
 
 		@param package_name: The name of the package to look up the sizes configuration file for
 		@type package_name: String
 		@return: The sizes configuration for the provided package name
-		@rtype: String
+		@rtype: Dict
 		"""
 		
 		entry = self.__get_package_info(package_name)
@@ -127,19 +128,19 @@ class PackageManager:
 			raise ValueError("This package does not provide color information")
 		
 		if self.__using_files:
-			return self.__reader.load(entry[PackageManager.SIZE_DESCRIPTOR], self.__language)
+			return self.__reader.load(entry[PackageManager.SIZE_DESCRIPTOR])
 		
 		else:
-			return self.__reader.loads(entry[PackageManager.SIZE_DESCRIPTOR], self.__language)
+			return entry[PackageManager.SIZE_DESCRIPTOR]
 
 	def get_positions_config(self, package_name):
 		"""
-		Provides the configuration string defining the named positions attached to the given package
+		Provides the configuration defining the named positions attached to the given package
 
 		@param package_name: The name of the package to look up the named positions configuration file for
 		@type package_name: String
 		@return: The sizes configuration for the provided package name
-		@rtype: String
+		@rtype: Dict
 		"""
 		
 		entry = self.__get_package_info(package_name)
@@ -148,10 +149,10 @@ class PackageManager:
 			raise ValueError("This package does not provide position information")
 		
 		if self.__using_files:
-			return self.__reader.load(entry[PackageManager.POSITIONS_DESCRIPTOR], self.__language)
+			return self.__reader.load(entry[PackageManager.POSITIONS_DESCRIPTOR])
 		
 		else:
-			return self.__reader.loads(entry[PackageManager.POSITIONS_DESCRIPTOR], self.__language)
+			return entry[PackageManager.POSITIONS_DESCRIPTOR]
 
 	def get_manipulation_source_file(self, package_name):
 		"""
@@ -229,12 +230,12 @@ class PackageManager:
 
 	def get_setup_config(self, package_name):
 		"""
-		Provides the configuration string defining the named setups attached to the given package
+		Provides the configuration defining the named setups attached to the given package
 
 		@param package_name: The name of the package to look up the named setup configuration file for
 		@type package_name: String
 		@return: The setup configurations for the provided package name
-		@rtype: String
+		@rtype: Dict
 		"""
 		entry = self.__get_package_info(package_name)
 
@@ -245,16 +246,16 @@ class PackageManager:
 			return self.__reader.load(entry[PackageManager.SETUP_DESCRIPTOR], self.__language)
 		
 		else:
-			return self.__reader.loads(entry[PackageManager.SETUP_DESCRIPTOR], self.__language)
+			return entry[PackageManager.SETUP_DESCRIPTOR]
 
 	def get_robot_config(self, package_name):
 		"""
-		Provides the configuration string defining the named robots attached to the given package
+		Provides the configuration defining the named robots attached to the given package
 
 		@param package_name: The name of the package to look up the named robot configuration file for
 		@type package_name: String
 		@return: The robot configurations for the provided package name
-		@rtype: String
+		@rtype: Dict
 		"""
 		entry = self.__get_package_info(package_name)
 
@@ -265,16 +266,16 @@ class PackageManager:
 			return self.__reader.load(entry[PackageManager.ROBOT_DESCRIPTOR], self.__language)
 		
 		else:
-			return self.__reader.loads(entry[PackageManager.ROBOT_DESCRIPTOR], self.__language)
+			return entry[PackageManager.ROBOT_DESCRIPTOR]
 	
 	def get_prototypes_config(self, package_name):
 		"""
-		Provides the configuration string defining the named virtual object prototypes attached to the given package
+		Provides the configuration defining the named virtual object prototypes attached to the given package
 
 		@param package_name: The name of the package to look up the named prototypes for
 		@type package_name: String
 		@return: The prototype configurations for the provided package name
-		@rtype: String
+		@rtype: Dict
 		"""
 		entry = self.__get_package_info(package_name)
 
@@ -282,13 +283,12 @@ class PackageManager:
 			raise ValueError("This package does not provide a location for a configuration file for prototypes")
 		
 		if self.__using_files:
-			return self.__reader.load(entry[PackageManager.PROTOTYPE_DESCRIPTOR], self.__language)
+			return self.__reader.load(entry[PackageManager.PROTOTYPE_DESCRIPTOR])
 		
 		else:
-			return self.__reader.loads(entry[PackageManager.PROTOTYPE_DESCRIPTOR], self.__language)
+			return entry[PackageManager.PROTOTYPE_DESCRIPTOR]
 
 	def __get_package_info(self, package_name):
-
 		if not package_name in self.__data:
 			raise ValueError("The package name provided has not been given a specification")
 
@@ -446,7 +446,7 @@ class VirtualObjectManipulationStrategy:
 		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
 	
 	def face(self, affector, position):
-		praise NotImplementedError("Must use implementor of this interface / fully abstract class")
+		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
 	
 	def update(self, target, position):
 		raise NotImplementedError("Must use implementor of this interface / fully abstract class")

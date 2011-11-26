@@ -1,0 +1,14 @@
+test_cube:
+    descriptor: cube
+    size: small
+    color: red
+test_sphere:
+    descriptor: sphere
+    size: 
+        - 0.5
+        - 1.5
+        - 2.5
+    color:
+        red: 0
+        blue: 100
+        green: 255

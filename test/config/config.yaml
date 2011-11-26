@@ -1,0 +1,16 @@
+%YAML 1.2
+---
+test:
+    colors: "./test/config/colors.yaml"
+    sizes: "./test/config/sizes.yaml"
+    positions: "./test/config/positions.yaml"
+    prototypes: "./test/config/prototypes.yaml"
+    manipulation:
+        location: "./test/manipulation.py"
+        class: "manipulation.TestManipulationStrategy"
+    construction:
+        location: "./test/construction.py"
+        class: "construction.TestConstructionStrategy"
+test_empty:
+    colors: "./test/config/colors.yaml"
+...
