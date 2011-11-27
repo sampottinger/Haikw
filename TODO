@@ -1,0 +1,15 @@
+Necessary additions:
+	- Robot loaders
+	- Experiment loaders
+	- OpenRAVE wrapper
+
+Necessary tests:
+	- Midlevel test:
+		- Builder
+		- Object Resolver Factory
+	- Manipulation test
+	- Robot load test
+	- Experiment load test
+
+Nice to haves:
+	- serialization

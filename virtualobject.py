@@ -10,6 +10,7 @@ This module provides management for objects simulated in the target inverse kine
 """
 
 import re
+import state
 
 class VirtualObject:
 	"""
@@ -31,6 +32,19 @@ class VirtualObject:
 		@param size: The size of this VirtualObject as it was created
 		@type size: VirtualObjectSize
 		"""
+		# Enforce types . . . it's kinda important here
+		if not isinstance(name, str):
+			raise TypeError("Expected string for VirtualObject name")
+		if not isinstance(position, state.VirtualObjectPosition):
+			raise TypeError("Expected VirtualObjectPosition for VirtualObject position")
+		if not isinstance(descriptor, str):
+			raise TypeError("Expected string for VirtualObject descriptor")
+		if not isinstance(color, VirtualObjectColor):
+			raise TypeError("Expected VirtualObjectColor for VirtualObject color")
+		if not isinstance(size, VirtualObjectSize):
+			raise TypeError("Expected VirtualObjectSize for VirtualObject size")
+
+		# Save instance vars
 		self.__name = name
 		self.__position = position
 		self.__descriptor = descriptor
@@ -149,18 +163,15 @@ class VirtualObjectConstructionStrategy:
 	@note: It's a bit un-pythonic to do this but, given long term extendability concerns, this option was taken
 	"""
 
-	def create_object(self, name, descriptor, color, size):
+	def __init__(self):
+		pass
+
+	def create_object(self, virtual_object):
 		"""
 		Creates a new object with the given properties
 
-		@param name: Identifying name for this new object
-		@type name: String
-		@param descriptor: Simple description of the object to make
-		@type descriptor: String
-		@param color: Color to make the next objects with
-		@type color: VirtualObjectColor
-		@param size: The size to assign to the next objects to make
-		@type size: VirtualObjectSize
+		@param virtual_object: The new virtual_object to add to the inverse kinematics sim
+		@type virtual_object: VirtualObject
 		"""
 
 		raise NotImplementedError("Must use subclass / implementor of this interface")
@@ -633,6 +644,11 @@ class VirtualObjectBuilder:
 		# resolve size
 		size = self.__named_size_resolver.get_size(self.__size)
 
-		# Create and return new object
-		return self.__construction_strategy.create_object(name, self.__descriptor, color, size)
+		# Create virtual object
+		new_obj = VirtualObject(name, position, self.__descriptor, color, size)
+
+		# Add to sim
+		self.__construction_strategy.create_object(new_obj)
+
+		return new_obj
 		

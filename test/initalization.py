@@ -325,6 +325,3 @@ test:
         self.assertRaises(ValueError, fm.get_manipulation_source_file, (fm, name))
         self.assertRaises(ValueError, fm.get_construction_class_name, (fm, name))
         self.assertRaises(ValueError, fm.get_construction_source_file, (fm, name))
-    
-if __name__ == '__main__':
-    unittest.main()

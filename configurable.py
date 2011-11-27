@@ -107,7 +107,7 @@ class MappedObjectResolverFactory:
 		resolver = virtualobject.MappedObjectResolver()
 
 		for name in prototypes:
-			data = prototypes[data]
+			data = prototypes[name]
 
 			# Extract descriptor
 			if not MappedObjectResolverFactory.DESCRIPTOR in data:
@@ -125,7 +125,7 @@ class MappedObjectResolverFactory:
 			if not MappedObjectResolverFactory.COLOR in data:
 				raise ValueError("This prototype description does not include a color")
 			
-			color = color_resolver.get_size(data[MappedObjectResolverFactory.COLOR])	
+			color = color_resolver.get_color(data[MappedObjectResolverFactory.COLOR])	
 			# Create flyweight and add
 			flyweight = virtualobject.ObjectResolverFlyweight(color, size, descriptor)
 			

@@ -33,9 +33,6 @@ class ConfigTests(unittest.TestCase):
 		self.position_factory_constructor = configurable.VirtualObjectPositionFactoryConstructor.get_instance()
 		self.position_factory = self.position_factory_constructor.create_factory(self.test_position_data)
 
-		# Create sample object resolver
-		# TODO: MappedObjectResolverFactory
-
 	def test_color_resolution(self):
 		""" Tests the creation of color resolution strategies """
 
@@ -80,5 +77,3 @@ class ConfigTests(unittest.TestCase):
 		self.assertEqual(large_offset.get_roll(), self.test_position_data["large_offset"]["roll"])
 		self.assertEqual(large_offset.get_pitch(), self.test_position_data["large_offset"]["pitch"])
 		self.assertEqual(large_offset.get_yaw(), self.test_position_data["large_offset"]["yaw"])
-	
-	# NOTE: Does not test mapped object resolver factory

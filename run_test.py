@@ -4,8 +4,14 @@ from test import initalization
 from test import virtualstructtest
 from test import configtests
 from test import loadertests
+from test import midleveltests
 
 full_suite = unittest.TestSuite()
+
+loader_suite = unittest.TestSuite()
+loader_suite.addTest(loadertests.LoaderTests("test_yaml_file"))
+loader_suite.addTest(loadertests.LoaderTests("test_yaml_string"))
+full_suite.addTest(loader_suite)
 
 init_suite = unittest.TestSuite()
 init_suite.addTest(initalization.InitalizationSuite("invalid_package_manager_init"))
@@ -37,9 +43,13 @@ config_suite.addTest(configtests.ConfigTests("test_named_size_resolution"))
 config_suite.addTest(configtests.ConfigTests("test_position_factory"))
 full_suite.addTest(config_suite)
 
-loader_suite = unittest.TestSuite()
-loader_suite.addTest(loadertests.LoaderTests("test_yaml_file"))
-loader_suite.addTest(loadertests.LoaderTests("test_yaml_string"))
-full_suite.addTest(loader_suite)
+midlevel_suite = unittest.TestSuite()
+midlevel_suite.addTest(midleveltests.MidlevelTests("test_object_resolver_color"))
+midlevel_suite.addTest(midleveltests.MidlevelTests("test_object_resolver_size"))
+midlevel_suite.addTest(midleveltests.MidlevelTests("test_object_resolver_descriptor"))
+midlevel_suite.addTest(midleveltests.MidlevelTests("test_built_color"))
+midlevel_suite.addTest(midleveltests.MidlevelTests("test_built_position"))
+midlevel_suite.addTest(midleveltests.MidlevelTests("test_built_descriptor"))
+full_suite.addTest(midlevel_suite)
 
-unittest.TextTestRunner(verbosity=2).run(full_suite)
+unittest.TextTestRunner().run(full_suite)
