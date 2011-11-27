@@ -436,6 +436,9 @@ class VirtualObjectManipulationStrategy:
 	Fully abstract class / interface for stratgies for package specific manipulation and management tasks
 	"""
 
+	def __init__(self):
+		pass
+
 	def get_default_affector(self):
 		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
 
@@ -445,7 +448,7 @@ class VirtualObjectManipulationStrategy:
 	def grab(self, target, affector):
 		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
 	
-	def face(self, affector, position):
+	def face(self, position, affector):
 		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
 	
 	def update(self, target, position):
@@ -462,7 +465,7 @@ class ExternalObjectBuilder:
 	User facing bridge component for the creation of virtual objects
 	"""
 
-	def __init__(self, inner_builder, object_strategy, position_strategy, facade):
+	def __init__(self, inner_builder, object_strategy, position_strategy):
 		"""
 		Creates a new builder to wrap the internal builder
 
@@ -472,13 +475,10 @@ class ExternalObjectBuilder:
 		@type object_strategy: NamedObjectResolver implementor
 		@param position_strategy: The strategy used to change names of positions to actual positions
 		@type position_strategy: VirtualObjectPositionFactory
-		@param facade: The facade this builder will register objects with
-		@type facade: ObjectManipulationFacade
 		"""
 		self.__descriptor_set = False
 		self.__object_builder = inner_builder
 		self.__object_strategy = object_strategy
-		self.__target_facade = facade
 		self.__position_strategy = position_strategy
 
 	def set_new_descriptor(self, descriptor):
@@ -549,7 +549,6 @@ class ExternalObjectBuilder:
 		
 		# TODO: This makes me a bit uneasy
 		new_object = self.__object_builder.create(name, position)
-		self.__target_facade.add_object(new_object)
 		return new_object
 	
 	def load_from_config(self, name):

@@ -13,3 +13,7 @@ Necessary tests:
 
 Nice to haves:
 	- serialization
+	- config to library
+	- common robot specification
+	- Non primitive objects
+	- update whole objects

@@ -10,15 +10,7 @@ Unit tests for testing "behind the scenes" mechanisms relient on other tested me
 import unittest
 import configurable
 import virtualobject
-
-class DummyConstructionStrategy(virtualobject.VirtualObjectConstructionStrategy):
-	""" Virtual object construction strategy that does exactly nothing """
-
-	def __init__(self):
-		virtualobject.VirtualObjectConstructionStrategy.__init__(self)
-	
-	def create_object(self, virtual_object):
-		pass
+import dummy
 	
 class MidlevelTests(unittest.TestCase):
 	""" Test suite for "midlevel" management objects """
@@ -54,7 +46,7 @@ class MidlevelTests(unittest.TestCase):
 		large_offset = self.position_factory.create_prefabricated("large_offset")
 		
 		# Create object builder
-		construction_strategy = DummyConstructionStrategy()
+		construction_strategy = dummy.DummyConstructionStrategy()
 		self.object_builder = virtualobject.VirtualObjectBuilder(construction_strategy, self.size_res_strategy, self.color_res_strategy)
 
 		# Test small red cube
