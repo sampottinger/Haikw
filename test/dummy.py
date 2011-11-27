@@ -1,5 +1,6 @@
 import virtualobject
 import experiment
+import manipulation
 
 class DummyConstructionStrategy(virtualobject.VirtualObjectConstructionStrategy):
 	""" Virtual object construction strategy that does exactly nothing """
@@ -10,11 +11,10 @@ class DummyConstructionStrategy(virtualobject.VirtualObjectConstructionStrategy)
 	def create_object(self, virtual_object):
 		pass
 
-class DummyManipulationStrategy(virtualobject.VirtualObjectManipulationStrategy):
+class DummyManipulationStrategy(manipulation.VirtualObjectManipulationStrategy):
 	""" Virtual object manipulation strategy for testing """
 
 	def __init__(self):
-		self.virtual_objects = {}
 		self.default_affector = experiment.RobotPart("test_affector")
 		self.grabbed = None
 		self.facing = None
@@ -22,11 +22,8 @@ class DummyManipulationStrategy(virtualobject.VirtualObjectManipulationStrategy)
 	def get_default_affector(self):
 		return self.default_affector
 	
-	def refresh(self, target, affector):
-		if not affector == self.default_affector:
-			raise ValueError("Expected affector to be default affector")
-		
-		return self.virtual_objects[target.get_name()]
+	def refresh(self, target):
+		return target
 	
 	def grab(self, target, affector):
 		if not affector == self.default_affector:
@@ -39,10 +36,11 @@ class DummyManipulationStrategy(virtualobject.VirtualObjectManipulationStrategy)
 			raise ValueError("Expected affector to be default affector")
 		
 		self.facing = position
+		if self.grabbed != None:
+			self.update(self.grabbed, position)
 	
 	def update(self, target, position):
-
-		self.virtual_objects[target.get_name()] = virtualobject.VirtualObject(target.get_name(), position, target.get_descriptor(), target.get_color(), target.get_size())
+		return virtualobject.VirtualObject(target.get_name(), position, target.get_descriptor(), target.get_color(), target.get_size())
 	
 	def release(self, affector):
 		if not affector == self.default_affector:
@@ -51,4 +49,5 @@ class DummyManipulationStrategy(virtualobject.VirtualObjectManipulationStrategy)
 		self.grabbed = None
 	
 	def delete(self, target):
-		del self.virtual_objects[target.get_name()]
+		if self.grabbed == target:
+			self.grabbed = None

@@ -101,7 +101,8 @@ class VirtualObjectPositionFactory:
 	DEFAULT = None
 	
 	def __init__(self, default_roll, default_pitch, default_yaw, prefabricated_positions):
-		""" Constructor for an VirtualObjectPositionFactory
+		"""
+		Constructor for an VirtualObjectPositionFactory
 		
 		@param default_roll: The default roll applied to new positions
 		@type default_roll: float
@@ -110,12 +111,22 @@ class VirtualObjectPositionFactory:
 		@param default_yaw: The default yaw applied to new positions
 		@type default_yaw: float
 		@param prefabricated_positions: Named default positions
-		@type prefabricated_positions: Dictionary of String to VirtualObjectPosition"""
+		@type prefabricated_positions: Dictionary of String to VirtualObjectPosition
+		"""
 
 		self.__default_roll = default_roll
 		self.__default_pitch = default_pitch
 		self.__default_yaw = default_yaw
 		self.__prefabricated_positions = prefabricated_positions
+	
+	def get_prefabrications(self):
+		"""
+		Determine which prefabricated positions are available
+
+		@return: Dictionary of prefabricated positions
+		@rtype: VirtualObjectPosition
+		"""
+		return self.__prefabricated_positions
 	
 	def create_position(self, x, y, z, roll=None, pitch=None, yaw=None):
 

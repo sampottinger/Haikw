@@ -5,6 +5,7 @@ from test import virtualstructtest
 from test import configtests
 from test import loadertests
 from test import midleveltests
+from test import topleveltests
 
 full_suite = unittest.TestSuite()
 
@@ -51,5 +52,20 @@ midlevel_suite.addTest(midleveltests.MidlevelTests("test_built_color"))
 midlevel_suite.addTest(midleveltests.MidlevelTests("test_built_position"))
 midlevel_suite.addTest(midleveltests.MidlevelTests("test_built_descriptor"))
 full_suite.addTest(midlevel_suite)
+
+toplevel_suite = unittest.TestSuite()
+toplevel_suite.addTest(topleveltests.ToplevelTests("test_external_builder_prototype_position"))
+toplevel_suite.addTest(topleveltests.ToplevelTests("test_external_builder_prototype_color"))
+toplevel_suite.addTest(topleveltests.ToplevelTests("test_external_builder_prototype_position"))
+toplevel_suite.addTest(topleveltests.ToplevelTests("test_facade_access"))
+toplevel_suite.addTest(topleveltests.ToplevelTests("test_facade_builder"))
+toplevel_suite.addTest(topleveltests.ToplevelTests("test_facade_update"))
+toplevel_suite.addTest(topleveltests.ToplevelTests("test_facade_grab"))
+toplevel_suite.addTest(topleveltests.ToplevelTests("test_facade_face_position"))
+toplevel_suite.addTest(topleveltests.ToplevelTests("test_facade_face_object"))
+toplevel_suite.addTest(topleveltests.ToplevelTests("test_facade_face_prefab_position"))
+toplevel_suite.addTest(topleveltests.ToplevelTests("test_facade_face_registered_object"))
+toplevel_suite.addTest(topleveltests.ToplevelTests("test_facade_put"))
+full_suite.addTest(toplevel_suite)
 
 unittest.TextTestRunner().run(full_suite)

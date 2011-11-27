@@ -504,6 +504,15 @@ class MappedObjectResolver(NamedObjectResolver):
 		NamedObjectResolver.__init__(self)
 		self.__mapping = {}
 	
+	def get_registered_objects(self):
+		""" 
+		Get a listing of all of the objects this resolver can resolve to
+
+		@return: The mapping in use by this resolver
+		@rtype: Dict
+		"""
+		return self.__mapping
+
 	def get_size(self, name):
 		"""
 		Resolves this name of the desired object to its prototype size
@@ -639,10 +648,16 @@ class VirtualObjectBuilder:
 			raise AttributeError("Size has not been set. Please call set_size and try again.")
 
 		# resolve color
-		color = self.__color_resolution_strategy.get_color(self.__color)
+		if isinstance(self.__color, VirtualObjectColor):
+			color = self.__color
+		else:
+			color = self.__color_resolution_strategy.get_color(self.__color)
 
 		# resolve size
-		size = self.__named_size_resolver.get_size(self.__size)
+		if isinstance(self.__size, VirtualObjectSize):
+			size = self.__size
+		else:
+			size = self.__named_size_resolver.get_size(self.__size)
 
 		# Create virtual object
 		new_obj = VirtualObject(name, position, self.__descriptor, color, size)

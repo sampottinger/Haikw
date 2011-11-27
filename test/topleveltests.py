@@ -11,6 +11,7 @@ import unittest
 import manipulation
 import configurable
 import virtualobject
+import state
 import dummy
 	
 class ToplevelTests(unittest.TestCase):
@@ -47,21 +48,23 @@ class ToplevelTests(unittest.TestCase):
 		large_offset = self.position_factory.create_prefabricated("large_offset")
 		
 		# Create internal object builder
-		construction_strategy = DummyConstructionStrategy()
+		construction_strategy = dummy.DummyConstructionStrategy()
 		self.object_builder = virtualobject.VirtualObjectBuilder(construction_strategy, self.size_res_strategy, self.color_res_strategy)
 
 		# Create external object builder
 		self.external_object_builder = manipulation.ExternalObjectBuilder(self.object_builder, self.object_resolver, self.position_factory)
 
 		# Create test objects
-		self.small_red_cube = self.external_object_builder("small_red_cube", "small_offset")
-		self.large_blue_sphere = self.external_object_builder("large_blue_sphere", "large_offset")
+		self.external_object_builder.load_from_config("small_red_cube")
+		self.small_red_cube = self.external_object_builder.create("small_red_cube", "small_offset")
+		self.external_object_builder.load_from_config("large_blue_sphere")
+		self.large_blue_sphere = self.external_object_builder.create("large_blue_sphere", "large_offset")
 
 		# Create dummy manipulation strategy
 		self.manual_manipulation_strategy = dummy.DummyManipulationStrategy()
 
 		# Create a manipulation facade without a factory
-		self.manual_facade = manipulation.ObjectManipulationFacade(self.external_object_builder, self.manual_manipulation_strategy, self.color_res_strategy, None, None, self.object_resolver)
+		self.manual_facade = manipulation.ObjectManipulationFacade(self.object_builder, self.manual_manipulation_strategy, self.color_res_strategy, self.size_res_strategy, self.position_factory, None, None, self.object_resolver)
 	
 	def test_external_builder_prototype_position(self):
 		""" Test the creation of object positions purely by prototype """
@@ -122,11 +125,110 @@ class ToplevelTests(unittest.TestCase):
 
 		# Test read all
 		all_objs = self.manual_facade.get_objects()
-		self.assertIn(self.small_red_cube.get_name(), all_objs)
-		self.assertIn(self.large_blue_sphere(), all_objs)
+		all_objs_names = map(lambda x: x.get_name(), all_objs)
+		self.assertIn(self.small_red_cube.get_name(), all_objs_names)
+		self.assertIn(self.large_blue_sphere.get_name(), all_objs_names)
 
 		# Test delete
 		self.manual_facade.delete(self.small_red_cube)
 		all_objs = self.manual_facade.get_objects()
-		self.assertNotIn(self.small_red_cube.get_name(), all_objs)
-		self.assertIn(self.large_blue_sphere.get_name(), all_objs)
+		all_objs_names = map(lambda x: x.get_name(), all_objs)
+		self.assertNotIn(self.small_red_cube.get_name(), all_objs_names)
+		self.assertIn(self.large_blue_sphere.get_name(), all_objs_names)
+
+		self.manual_facade.delete("large_blue_sphere")
+		all_objs = self.manual_facade.get_objects()
+		all_objs_names = map(lambda x: x.get_name(), all_objs)
+		self.assertNotIn("large_blue_sphere", all_objs_names)
+	
+	def test_facade_builder(self):
+		""" Test that the builder produced by the manipulation facade is valid """
+
+		generated_builder = self.manual_facade.get_object_builder()
+		generated_builder.load_from_config("small_red_cube")
+		small_red_cube = generated_builder.create("small_red_cube", "small_offset")
+		self.assertEqual(small_red_cube.get_descriptor(), "cube")
+	
+	def test_facade_update(self):
+		""" Test that the facade can update target simulations """
+
+		self.manual_facade.add_object(self.small_red_cube)
+		new_position = state.VirtualObjectPosition(10, 11, 12, 0, 0, 0)
+		self.manual_facade.update(self.small_red_cube, new_position)
+		test_cube = self.manual_facade.get_object(self.small_red_cube.get_name())
+
+		test_position = test_cube.get_position()
+		self.assertEqual(test_position.get_x(), new_position.get_x())
+		self.assertEqual(test_position.get_y(), new_position.get_y())
+		self.assertEqual(test_position.get_z(), new_position.get_z())
+
+		self.manual_facade.delete(test_cube)
+	
+	def test_facade_grab(self):
+		""" That that the facade can grab objects in simulations """
+
+		self.manual_facade.add_object(self.small_red_cube)
+		self.manual_facade.grab(self.small_red_cube)
+		self.assertEqual(self.manual_manipulation_strategy.grabbed.get_name(), self.small_red_cube.get_name())
+		self.manual_facade.release()
+		self.assertEqual(self.manual_manipulation_strategy.grabbed, None)
+		self.manual_facade.grab(self.small_red_cube.get_name())
+		self.assertEqual(self.manual_manipulation_strategy.grabbed.get_name(), self.small_red_cube.get_name())
+		self.manual_facade.delete(self.small_red_cube)
+		self.assertEqual(self.manual_manipulation_strategy.grabbed, None)
+	
+	def test_facade_face_position(self):
+		""" Test that the facade can face a position in the simulation """
+		target_position = state.VirtualObjectPosition(1, 2, 3, roll=0.4, pitch=0.5, yaw=0.6)
+		self.manual_facade.face(target_position)
+		actual_position = self.manual_manipulation_strategy.facing
+		self.assertEqual(actual_position.get_x(), target_position.get_x())
+		self.assertEqual(actual_position.get_y(), target_position.get_y())
+		self.assertEqual(actual_position.get_z(), target_position.get_z())
+		self.assertEqual(actual_position.get_roll(), target_position.get_roll())
+		self.assertEqual(actual_position.get_pitch(), target_position.get_pitch())
+		self.assertEqual(actual_position.get_yaw(), target_position.get_yaw())
+	
+	def test_facade_face_object(self):
+		""" Test that the facade can face an object in the simulation """
+		self.manual_facade.face(self.large_blue_sphere)
+		actual_position = self.manual_manipulation_strategy.facing
+		target_position = self.large_blue_sphere.get_position()
+		self.assertEqual(actual_position.get_x(), target_position.get_x())
+		self.assertEqual(actual_position.get_y(), target_position.get_y())
+		self.assertEqual(actual_position.get_z(), target_position.get_z())
+		self.assertEqual(actual_position.get_roll(), target_position.get_roll())
+		self.assertEqual(actual_position.get_pitch(), target_position.get_pitch())
+		self.assertEqual(actual_position.get_yaw(), target_position.get_yaw())
+	
+	def test_facade_face_prefab_position(self):
+		""" Test that the facade can face a named prefabricated position """
+		self.manual_facade.face("small_offset")
+		actual_position = self.manual_manipulation_strategy.facing
+		target_position = self.position_factory.create_prefabricated("small_offset")
+		self.assertEqual(actual_position.get_x(), target_position.get_x())
+		self.assertEqual(actual_position.get_y(), target_position.get_y())
+		self.assertEqual(actual_position.get_z(), target_position.get_z())
+		self.assertEqual(actual_position.get_roll(), target_position.get_roll())
+		self.assertEqual(actual_position.get_pitch(), target_position.get_pitch())
+		self.assertEqual(actual_position.get_yaw(), target_position.get_yaw())
+
+	def test_facade_face_registered_object(self):
+		""" Test that the facade can face an object in the simulation """
+		self.manual_facade.add_object(self.small_red_cube)
+		self.manual_facade.face("small_red_cube")
+		actual_position = self.manual_manipulation_strategy.facing
+		target_position = self.small_red_cube.get_position()
+		self.assertEqual(actual_position.get_x(), target_position.get_x())
+		self.assertEqual(actual_position.get_y(), target_position.get_y())
+		self.assertEqual(actual_position.get_z(), target_position.get_z())
+		self.assertEqual(actual_position.get_roll(), target_position.get_roll())
+		self.assertEqual(actual_position.get_pitch(), target_position.get_pitch())
+		self.assertEqual(actual_position.get_yaw(), target_position.get_yaw())
+		self.manual_facade.delete(self.small_red_cube)
+	
+	def test_facade_put(self):
+		""" Test that the facade can place objects in the simulation """
+		self.manual_facade.add_object(self.small_red_cube)
+		self.manual_facade.put(self.small_red_cube, "large_offset")
+		# WARNING: dummy does not track objects. This could be used to verify put method and should be fixed in future revision on unit testing

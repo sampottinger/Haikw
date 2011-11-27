@@ -17,3 +17,7 @@ Nice to haves:
 	- common robot specification
 	- Non primitive objects
 	- update whole objects
+	- direct creation of relative positions
+	- edit virtual objects as opposed to updating them (?)
+	- create object by just prefab name + position
+	- unify outward interface

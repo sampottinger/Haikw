@@ -11,6 +11,9 @@ import imp
 import configurable
 import loaders
 import serializers
+import structures
+import virtualobject
+import state
 
 class PackageManager:
 	"""
@@ -442,7 +445,7 @@ class VirtualObjectManipulationStrategy:
 	def get_default_affector(self):
 		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
 
-	def refresh(self, target, affector):
+	def refresh(self, target):
 		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
 	
 	def grab(self, target, affector):
@@ -616,16 +619,20 @@ class ObjectManipulationFacade:
 		@type target: VirtualObject or String name to resolve
 		"""
 		if isinstance(target, str):
-			target = self.get_object(target)
-		elif not isinstance(target, VirtualObject):
+			target_name = target
+			target = self.get_object(target_name)
+		elif isinstance(target, virtualobject.VirtualObject):
+			target_name = target.get_name()
+		else:
 			raise ValueError("Expected String name for target or VirtualObject")
 		
 		self.__manipulation_strategy.delete(target)
+		del self.__virtual_objects[target_name]
 
 	def get_object_builder(self):
 		""" Return a common builder for this factory """
 		if not self.__external_facing_object_builder:
-			self.__external_facing_object_builder = ExternalObjectBuilder(self.__internal_object_builder, self.__object_strategy, self)
+			self.__external_facing_object_builder = ExternalObjectBuilder(self.__internal_object_builder, self.__object_strategy, self.__object_position_factory)
 		
 		return self.__external_facing_object_builder
 	
@@ -650,7 +657,6 @@ class ObjectManipulationFacade:
 			for name in self.__virtual_objects.keys():
 				orig = self.__virtual_objects[name]
 				updated = self.refresh(orig)
-				self.__virtual_objects[name] = updated
 				ret_val.append(updated)
 		else:
 			ret_val = self.__virtual_objects.vals()
@@ -688,16 +694,18 @@ class ObjectManipulationFacade:
 		# Resolve target
 		if isinstance(target, str):
 			target = self.get_object(target, False)
-		elif not isinstance(target, VirtualObject):
+		elif not isinstance(target, virtualobject.VirtualObject):
 			raise ValueError("Target must be the string name of a simulated object or a VirtualObject instance")
 		
 		# Resolve position
 		if isinstance(position, str):
 			position = self.__object_position_factory.create_prefabricated(position)
-		elif not isinstance(position, VirtualObjectPosition):
+		elif not isinstance(position, state.VirtualObjectPosition):
 			raise ValueError("Expected position to be a VirtualObjectPosition instance or String name corresponding to position from a config file")
 		
-		self.__manipulation_strategy.update(target, position)
+		target = self.__manipulation_strategy.update(target, position)
+		del self.__virtual_objects[target.get_name()]
+		self.__virtual_objects[target.get_name()] = target
 	
 	def refresh(self, target):
 		"""
@@ -707,7 +715,7 @@ class ObjectManipulationFacade:
 		@target target: VirtualObject
 		"""
 		name = target.get_name()
-		new = self.__manipulation_strategy.update(target)
+		new = self.__manipulation_strategy.refresh(target)
 		del self.__virtual_objects[name]
 		self.__virtual_objects[name] = new
 		return new
@@ -722,13 +730,26 @@ class ObjectManipulationFacade:
 		@type position: String name of a prefacbricated position or VirtualObjectPosition
 		@keyword affector: Specify which affector to use to do the manipulation
 		@type affector: RobotPart
+		@return: Updated version of the object just moved
+		@rtype: VirtualObject
 		"""
 		if affector == None:
 			affector = self.__manipulation_strategy.get_default_affector()
+
+		if isinstance(target, str):
+
+			if not target in self.__virtual_objects:
+				raise KeyError("That object has not been registered in this simulation yet")
+			
+			target = self.__virtual_objects[target]
+		
+		elif not isinstance(target, virtualobject.VirtualObject):
+			raise ValueError("Expected target to be a VirtualObject or string name of a registered VirtualObject")
 		
 		self.grab(target, affector=affector)
 		self.face(position, affector=affector)
 		self.release(affector=affector)
+		return self.refresh(target)
 	
 	def release(self, affector=None):
 		"""
@@ -756,7 +777,7 @@ class ObjectManipulationFacade:
 		
 		if isinstance(target, str):
 			target = self.get_object(target)
-		elif not isinstance(target, VirtualObject):
+		elif not isinstance(target, virtualobject.VirtualObject):
 			raise ValueError("Position must be the name (string) of a simulated object or a VirtualObject")
 
 		self.__manipulation_strategy.grab(target, affector)
@@ -766,24 +787,30 @@ class ObjectManipulationFacade:
 		Have the robot in the simulation "face" the target virtual object
 
 		@param target: The object to face
-		@type target: VirtualObject
+		@type target: VirtualObject, String, or VirtualObjectPosition
 		@keyword affector: The part of the robot that will face the target object. If not specified, the underlying library will decide.
 		@type affector: RobotPart
 		"""
 		if affector == None:
 			affector = self.__manipulation_strategy.get_default_affector()
+		
+		# Try to resolve targets to face
+		if isinstance(target, state.VirtualObjectPosition):
+			position = target
+		elif isinstance(target, virtualobject.VirtualObject):
+			position = target.get_position()
+		elif isinstance(target, str):
 
-		self.__manipulation_strategy.face(target, affector)
-	
-	def face_by_name(self, name, affector = None):
-		"""
-		Have the robot in the simulation "face" the virtual object with the given name
+			if target in self.__object_position_factory.get_prefabrications():
+				position = self.__object_position_factory.create_prefabricated(target)
+			elif target in self.__virtual_objects:
+				position = self.__virtual_objects[target].get_position()
+			else:
+				raise ValueError("Unable to resolve string target to position")
+		
+		else:
+			raise TypeError("Expected target to be a VirtualObject, VirtualObjectPosition, or String name of a position or object")
 
-		@param name: The name of the object to face
-		@type name: String
-		@keyword affector: The part of the robot that will face the target object. If not specified, the underlying library will decide.
-		@type affector: RobotPart 
-		"""
-		self.face(self.__virtual_objects[name])
+		self.__manipulation_strategy.face(position, affector)
 
 	# TODO: Place relative, set_new_prototype, 
