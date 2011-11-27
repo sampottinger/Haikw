@@ -6,6 +6,7 @@ from test import configtests
 from test import loadertests
 from test import midleveltests
 from test import topleveltests
+from test import facadeconsttests
 
 full_suite = unittest.TestSuite()
 
@@ -67,5 +68,13 @@ toplevel_suite.addTest(topleveltests.ToplevelTests("test_facade_face_prefab_posi
 toplevel_suite.addTest(topleveltests.ToplevelTests("test_facade_face_registered_object"))
 toplevel_suite.addTest(topleveltests.ToplevelTests("test_facade_put"))
 full_suite.addTest(toplevel_suite)
+
+facade_construction_suite = unittest.TestSuite()
+facade_construction_suite.addTest(facadeconsttests.FacadeConstructionTests("check_package_inclusion"))
+facade_construction_suite.addTest(facadeconsttests.FacadeConstructionTests("check_builder_color"))
+facade_construction_suite.addTest(facadeconsttests.FacadeConstructionTests("check_builder_size"))
+facade_construction_suite.addTest(facadeconsttests.FacadeConstructionTests("check_builder_descriptor"))
+facade_construction_suite.addTest(facadeconsttests.FacadeConstructionTests("check_manipulation"))
+full_suite.addTest(facade_construction_suite)
 
 unittest.TextTestRunner().run(full_suite)

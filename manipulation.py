@@ -94,6 +94,15 @@ class PackageManager:
 		else:
 			raise ValueError("Please specify a configuration or configuration file")
 	
+	def get_supported_packages(self):
+		"""
+		Determines which packages this manger is tracking 
+
+		@return: A listing of packages this manager provides support for
+		@rtype: List of Strings
+		"""
+		return self.__data.keys()
+	
 	def get_colors_config(self, package_name):
 		"""
 		Provides the configuration defining colors attached to the given package
@@ -304,7 +313,7 @@ class ObjectManipulationFactory:
 
 	__instance = None
 
-	def __init__(self, configuration_file):
+	def __init__(self, language, configuration_file):
 		"""
 		Constructor for an ObjectManipulationFactory
 
@@ -322,7 +331,7 @@ class ObjectManipulationFactory:
 		@return: List of inverse kinematics packages currently supported
 		@rtype: List of Strings
 		"""
-		return self.__object_construction_strategies.keys()
+		return self.__package_manager.get_supported_packages()
 	
 	def create_facade(self, package, language, colors_source = None, colors_file_location=None, sizes_source = None, sizes_file_location=None, positions_source = None, positions_file_location=None, setup_source = None, setup_file_location=None, robot_source = None, robot_file_location=None, prototypes_file_location=None, prototypes_source=None):
 		"""
@@ -384,7 +393,7 @@ class ObjectManipulationFactory:
 		else:
 			positions = self.__package_manager.get_positions_config(package)
 
-		if setup_source_source != None:
+		if setup_source != None:
 			setup_source = serializer.loads(setup_source)
 		elif setup_file_location:
 			setup_source = serializer.load(setup_file_location)
@@ -812,5 +821,9 @@ class ObjectManipulationFacade:
 			raise TypeError("Expected target to be a VirtualObject, VirtualObjectPosition, or String name of a position or object")
 
 		self.__manipulation_strategy.face(position, affector)
+	
+	def get_manipulation_strategy(self):
+		""" Allow direct access to the underlying manipulation strategy for the Will Robinsons of the world """
+		return self.__manipulation_strategy
 
 	# TODO: Place relative, set_new_prototype, 
