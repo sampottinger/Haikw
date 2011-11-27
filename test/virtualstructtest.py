@@ -12,7 +12,7 @@ import virtualobject
 import state
 	
 class VirtualObjectSuite(unittest.TestCase):
-	""" Test suite for initalization / setup mechanisms """
+	""" Test suite for maintaining objects in IK simulations """
 
 	def simple_virtual_object_test(self):
 		""" Tests the simple VirtualObject structures """

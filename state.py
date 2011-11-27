@@ -148,7 +148,7 @@ class VirtualObjectPositionFactory:
 		
 		return VirtualObjectPosition(x, y, z, roll, pitch, yaw)
 	
-	def create_prefabricated(name, x=None, y=None, z=None, roll=None, pitch=None, yaw=None):
+	def create_prefabricated(self, name, x=None, y=None, z=None, roll=None, pitch=None, yaw=None):
 		""" Creates a new position based off of the named prefabricated position
 			
 		@param name: The name of the prefabrication to base this new position off of
@@ -175,7 +175,7 @@ class VirtualObjectPositionFactory:
 
 		return self.clone(position, x, y, z, roll, pitch, yaw)
 		
-	def clone(position, x=None, y=None, z=None, roll=None, pitch=None, yaw=None):
+	def clone(self, position, x=None, y=None, z=None, roll=None, pitch=None, yaw=None):
 		""" Creates a new position based off of the given position 
 
 		@param position: The position to base the new position off of

@@ -1,0 +1,12 @@
+%YAML 1.2
+---
+test_1:
+    property_1_str: value1
+    property_2_int: 2
+test_2:
+    property_3_float: 3.14
+    property_4_list:
+        - list_1
+        - 2
+        - 2.718
+...

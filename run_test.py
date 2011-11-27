@@ -2,6 +2,8 @@
 import unittest
 from test import initalization
 from test import virtualstructtest
+from test import configtests
+from test import loadertests
 
 full_suite = unittest.TestSuite()
 
@@ -28,5 +30,16 @@ virtual_object_suite.addTest(virtualstructtest.VirtualObjectSuite("color_test"))
 virtual_object_suite.addTest(virtualstructtest.VirtualObjectSuite("size_test"))
 virtual_object_suite.addTest(virtualstructtest.VirtualObjectSuite("object_resolution_test"))
 full_suite.addTest(virtual_object_suite)
+
+config_suite = unittest.TestSuite()
+config_suite.addTest(configtests.ConfigTests("test_color_resolution"))
+config_suite.addTest(configtests.ConfigTests("test_named_size_resolution"))
+config_suite.addTest(configtests.ConfigTests("test_position_factory"))
+full_suite.addTest(config_suite)
+
+loader_suite = unittest.TestSuite()
+loader_suite.addTest(loadertests.LoaderTests("test_yaml_file"))
+loader_suite.addTest(loadertests.LoaderTests("test_yaml_string"))
+full_suite.addTest(loader_suite)
 
 unittest.TextTestRunner(verbosity=2).run(full_suite)

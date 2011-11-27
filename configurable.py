@@ -9,12 +9,16 @@ Module containing factories driven by user provided configuration
 
 import re
 import virtualobject
+import state
 
 class ComplexColorResolutionFactory:
 	"""
 	Factory singleton creating ComplexColorResolutionStrategies from dicts
 	"""
 
+	__instance = None
+
+	@classmethod
 	def get_instance(self):
 		"""
 		Returns a shared instance of this ComplexColorResolutionFactory, creating it if necessary
@@ -49,7 +53,7 @@ class ComplexColorResolutionFactory:
 		for name in data.keys():
 
 			# Add it to the new strategy
-			strategy.add_color(name, new_color)
+			strategy.add_color(name, data[name])
 		
 		return strategy
 
@@ -64,6 +68,7 @@ class MappedObjectResolverFactory:
 
 	__instance = None
 
+	@classmethod
 	def get_instance(self):
 		"""
 		Returns a shared instance of this MappedObjectResolverFactory, creating it if necessary
@@ -136,6 +141,7 @@ class ComplexNamedSizeResolverFactory:
 
 	__instance = None
 
+	@classmethod
 	def get_instance(self):
 		"""
 		Returns a shared instance of this ComplexNamedSizeResolverFactory, creating it if necessary
@@ -174,7 +180,7 @@ class ComplexNamedSizeResolverFactory:
 
 		for name in data.keys():
 			new_size = virtualobject.VirtualObjectSize(data[name])
-			new_resolver.add(name, new_size)
+			new_resolver.add_size(name, new_size)
 		
 		return new_resolver
 
@@ -187,6 +193,9 @@ class VirtualObjectPositionFactoryConstructor:
 	DEFAULT_PITCH = 0
 	DEFAULT_YAW = 0
 
+	__instance = None
+
+	@classmethod
 	def get_instance(self):
 		"""
 		Returns a shared instance of this VirtualObjectPositionFactoryConstructor, creating it if necessary
@@ -231,23 +240,31 @@ class VirtualObjectPositionFactoryConstructor:
 			if not "x" in entry:
 				raise ValueError("Expected value for x but none was provided for this prefabricated position")
 			x = entry["x"]
+
 			if not "y" in entry:
 				raise ValueError("Expected value for y but none was provided for this prefabricated position")
 			y = entry["y"]
+
 			if not "z" in entry:
 				raise ValueError("Expected value for z but none was provided for this prefabricated position")
 			z = entry["z"]
+
 			if not "roll" in entry:
-				raise ValueError("Expected value for roll but none was provided for this prefabricated position")
-			roll = entry["roll"]
+				roll = VirtualObjectPositionFactoryConstructor.DEFAULT_ROLL
+			else:
+				roll = entry["roll"]
+
 			if not "pitch" in entry:
-				raise ValueError("Expected value for pitch but none was provided for this prefabricated position")
-			pitch = entry["pitch"]
+				pitch = VirtualObjectPositionFactoryConstructor.DEFAULT_PITCH
+			else:
+				pitch = entry["pitch"]
+			
 			if not "yaw" in entry:
-				raise ValueError("Expected value for yaw but none was provided for this prefabricated position")
-			yaw = entry["yaw"]
+				yaw = VirtualObjectPositionFactoryConstructor.DEFAULT_YAW
+			else:
+				yaw = entry["yaw"]
 			
 			# Create new position
-			prefabricated_positions[name] = virtualobject.VirtualObjectPosition(x, y, z, roll, pitch, yaw)
+			prefabricated_positions[name] = state.VirtualObjectPosition(x, y, z, roll, pitch, yaw)
 		
 		return state.VirtualObjectPositionFactory(VirtualObjectPositionFactoryConstructor.DEFAULT_ROLL, VirtualObjectPositionFactoryConstructor.DEFAULT_PITCH, VirtualObjectPositionFactoryConstructor.DEFAULT_YAW, prefabricated_positions)
