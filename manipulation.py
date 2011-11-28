@@ -21,8 +21,6 @@ class ObjectManipulationFactory:
 	Factory singleton to configure and create an ObjectManipuationFacade along with its supporting parts
 	"""
 
-	__instance = None
-
 	def __init__(self, language, configuration_file):
 		"""
 		Constructor for an ObjectManipulationFactory
@@ -194,6 +192,17 @@ class ObjectManipulationFacade:
 		self.__robot_manager = robot_manager
 		self.__object_strategy = object_strategy
 	
+	def load_setup(self, name):
+		"""
+		Loads the experiment setup of the given name
+
+		@param name: The name of the setup to load
+		@type name: String
+		"""
+		experiment_loader = ExperimentLoader.get_instance()
+		setup = self.__setup_manager.get(name)
+		experiment_loader.load_experiment(self, setup)
+	
 	def delete(self, target):
 		"""
 		Deletes the given target object
@@ -234,6 +243,8 @@ class ObjectManipulationFacade:
 
 		@keyword update: If True, all the object's positions will be updated before returned. Otherwise will return position from last check. Defaults to True.
 		@type update: bool
+		@return: List of objects in this simulation
+		@rtype: List of VirtualObject
 		"""
 		if update:
 			ret_val = []
@@ -401,3 +412,52 @@ class ObjectManipulationFacade:
 		return self.__manipulation_strategy
 
 	# TODO: Place relative, set_new_prototype, 
+
+class ExperimentLoader:
+	""" Loads a setup into a simulation through a manipulation facade """
+
+	__instance = None
+
+	@classmethod
+	def get_instance(self):
+		"""
+		Returns a shared instance of this ExperimentLoader, creating it if necessary
+
+		@return: Shared instance of this singleton
+		@rtype: ExperimentLoader
+		"""
+
+		if not ExperimentLoader.__instance:
+			ExperimentLoader.__instance = ExperimentLoader()
+		
+		return ExperimentLoader.__instance
+	
+	def __init__(self):
+		pass
+
+	def load_experiment(self, facade, setup):
+		"""
+		Clears out the provided facade's simulation environment, replacing it with the one described in the given setup
+
+		@param facade: The facade whose simulation this setup will be loaded into
+		@type facade: ObjectManipulationFacade
+		@param setup: The setup to load into the given facade
+		@type setup: Setup
+		"""
+
+		self.__clear_experiment(facade)
+
+		for obj in setup.get_objects():
+			facade.add_object(obj)
+	
+	def __clear_experiment(self, facade):
+		"""
+		Clears the experiment in use by the given facade
+
+		@param facade: The facade whose setup will be cleared
+		@type facade: ObjectManipulationFacade
+		"""
+		objs = facade.get_objects(update=False)
+
+		for obj in objs:
+			facade.delete(obj)

@@ -69,13 +69,13 @@ class ToplevelTests(unittest.TestCase):
 		# Create dummy manipulation strategy
 		self.manual_manipulation_strategy = dummy.DummyManipulationStrategy()
 
-		# Create a manipulation facade without a factory
-		self.manual_facade = manipulation.ObjectManipulationFacade(self.object_builder, self.manual_manipulation_strategy, self.color_res_strategy, self.size_res_strategy, self.position_factory, None, None, self.object_resolver)
-		
 		# Test setup manager
 		# TODO: This needs object_builder to be a complex object builder
 		self.setup_manager_factory = configurable.SetupManagerFactory.get_instance()
 		self.setup_manager = self.setup_manager_factory.create_setup_manager(self.test_setups_data, self.external_object_builder)
+
+		# Create a manipulation facade without a factory
+		self.manual_facade = manipulation.ObjectManipulationFacade(self.object_builder, self.manual_manipulation_strategy, self.color_res_strategy, self.size_res_strategy, self.position_factory, self.setup_manager, None, self.object_resolver)
 
 	def test_external_builder_prototype_position(self):
 		""" Test the creation of object positions purely by prototype """
@@ -357,4 +357,22 @@ class ToplevelTests(unittest.TestCase):
 		self.assertEqual(small_offset.get_x(), self.test_position_data["small_offset"]["x"])
 		self.assertEqual(small_offset.get_y(), self.test_position_data["small_offset"]["y"])
 		self.assertEqual(small_offset.get_z(), self.test_position_data["small_offset"]["z"])
+	
+	def test_experiemnt_loading(self):
+		""" Test loading an experiment setup """
 
+		self.manual_facade.add_object(self.small_red_cube)
+		self.manual_facade.get_object(self.small_red_cube.get_name()) # This should not throw any exceptions, TODO: Bad form
+
+		self.manual_facade.load_setup("test_setup_1")
+
+		self.assertRaises(KeyError, self.manual_facade.get_object, (self.manual_facade, self.small_red_cube.get_name()))
+
+		all_objs = self.manual_facade.get_objects()
+		obj_names = map(lambda x: x.get_name(), all_objs)
+
+		# Test that the following are the only present
+		self.assertEqual(len(all_objs), 2)
+		expected_names = ["red_block_1", "green_sphere_1"]
+		for name in expected_names:
+			self.assertIn(name, obj_names)

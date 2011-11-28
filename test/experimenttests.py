@@ -1,5 +1,5 @@
 """
-Very simple unit tests for experiment structures, mostly here for future complexity
+Very simple unit tests for experiment structures and loading
 
 @author: Sam Pottinger
 @license: GNU General Public License v2

@@ -82,6 +82,7 @@ toplevel_suite.addTest(topleveltests.ToplevelTests("test_setup_color_components"
 toplevel_suite.addTest(topleveltests.ToplevelTests("test_setup_size"))
 toplevel_suite.addTest(topleveltests.ToplevelTests("test_setup_position"))
 toplevel_suite.addTest(topleveltests.ToplevelTests("test_setup_prefab"))
+toplevel_suite.addTest(topleveltests.ToplevelTests("test_experiemnt_loading"))
 full_suite.addTest(toplevel_suite)
 
 #facade_construction_suite = unittest.TestSuite()
