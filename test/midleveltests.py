@@ -47,17 +47,17 @@ class MidlevelTests(unittest.TestCase):
 		
 		# Create object builder
 		construction_strategy = dummy.DummyConstructionStrategy()
-		self.object_builder = virtualobject.VirtualObjectBuilder(construction_strategy, self.size_res_strategy, self.color_res_strategy)
+		self.object_builder = virtualobject.VirtualObjectBuilder(construction_strategy)
 
 		# Test small red cube
 		self.object_builder.set_descriptor("cube")
-		self.object_builder.set_color("red")
-		self.object_builder.set_size("small")
+		self.object_builder.set_color(self.color_res_strategy.get_color("red"))
+		self.object_builder.set_size(self.size_res_strategy.get_size("small"))
 		self.small_red_cube = self.object_builder.create("small_red_cube", small_offset)
 
 		# Test large red sphere
 		self.object_builder.set_descriptor("sphere")
-		self.object_builder.set_size("large")
+		self.object_builder.set_size(self.size_res_strategy.get_size("large"))
 		self.large_red_sphere = self.object_builder.create("large_red_sphere", large_offset)
 
 	def test_object_resolver_color(self):

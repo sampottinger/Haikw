@@ -430,7 +430,7 @@ class ObjectManipulationFactory:
 		object_strategy = configurable.MappedObjectResolverFactory.get_instance().create_resolver(prototypes_source, size_strategy, color_strategy)
 
 		# Create builder
-		builder = virtualobject.VirtualObjectBuilder(construction_strategy, size_strategy_color_strategy)
+		builder = virtualobject.VirtualObjectBuilder(construction_strategy)
 		
 		# Create setups and robots
 		setups = serializers.SetupSerializer.get_instance().list_from_dict(setup_source)
@@ -472,12 +472,12 @@ class VirtualObjectManipulationStrategy:
 	def delete(self, target):
 		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
 
-class ExternalObjectBuilder:
+class ComplexObjectBuilder:
 	"""
-	User facing bridge component for the creation of virtual objects
+	User facing bridge component for the creation of virtual objects that can resolve components by config files
 	"""
 
-	def __init__(self, inner_builder, object_strategy, position_strategy):
+	def __init__(self, inner_builder, object_strategy, position_strategy, named_size_resolver, color_resolution_strategy):
 		"""
 		Creates a new builder to wrap the internal builder
 
@@ -487,6 +487,10 @@ class ExternalObjectBuilder:
 		@type object_strategy: NamedObjectResolver implementor
 		@param position_strategy: The strategy used to change names of positions to actual positions
 		@type position_strategy: VirtualObjectPositionFactory
+		@param named_size_resolver: Strategy for turning names into sizes for name - descriptor pairs
+		@type named_size_resolver: Subclass of NamedSizeResolver
+		@param color_resolution_strategy: A strategy for turning strings passed in for colors to VirtualObjectColor objects
+		@type color_resolution_strategy: Subclass of ColorResolutionStrategy
 		"""
 		self.__descriptor_set = False
 		self.__object_builder = inner_builder
@@ -511,6 +515,9 @@ class ExternalObjectBuilder:
 		@param new_color: The color to give to the next object and following objects to be created
 		@type new_color: String
 		"""
+		# resolve color
+		if not isinstance(color, virtualobject.VirtualObjectColor):
+			color = self.__color_resolution_strategy.get_color(self.__color)
 
 		self.__object_builder.set_color(color)
 	
@@ -521,6 +528,9 @@ class ExternalObjectBuilder:
 		@param new_size: The size to give to the next object and following objects to be created
 		@type new_size: VirtualObjectSize
 		"""
+		# resolve size
+		if not isinstance(size, virtualobject.VirtualObjectSize):
+			size = self.__named_size_resolver.get_size(self.__size)
 
 		self.__object_builder.set_size(size)
 	
@@ -641,7 +651,7 @@ class ObjectManipulationFacade:
 	def get_object_builder(self):
 		""" Return a common builder for this factory """
 		if not self.__external_facing_object_builder:
-			self.__external_facing_object_builder = ExternalObjectBuilder(self.__internal_object_builder, self.__object_strategy, self.__object_position_factory)
+			self.__external_facing_object_builder = ComplexObjectBuilder(self.__internal_object_builder, self.__object_strategy, self.__object_position_factory, self.__named_size_resolver, self.__color_resolution_strategy)
 		
 		return self.__external_facing_object_builder
 	

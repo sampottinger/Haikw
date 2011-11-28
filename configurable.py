@@ -184,6 +184,74 @@ class ComplexNamedSizeResolverFactory:
 		
 		return new_resolver
 
+class SetupManagerFactory:
+	"""
+	Factory singleton that creates a SetupManager
+	"""
+
+	COLOR = "color"
+	POSITION = "position"
+	DESCRIPTOR = "descriptor"
+	SIZE = "size"
+
+	__instance = None
+
+	@classmethod
+	def get_instance(self):
+		"""
+		Returns a shared instance of this SetupManagerFactory, creating it if necessary
+
+		@return: Shared instance of this singleton
+		@rtype: SetupManagerFactory
+		"""
+
+		if not SetupManagerFactory.__instance:
+			SetupManagerFactory.__instance = SetupManagerFactory()
+		
+		return SetupManagerFactory.__instance
+	
+	def create_setup_manager(self, data, obj_builder):
+		"""
+		Creates a new SetupManager
+
+		@param data: Dictionary containing a setup strategy of form {"setup_1":{"test_block":{"color":"red", "position":"origin", "size":"small", descriptor:"cube"}}}
+		@type data: Dict
+		@param obj_builder: Builder used to make virtual objects
+		@type obj_builder: VirtualObjectBuilder
+		@return: A new SetupManager cooresponding to provided dictionary
+		@rtype: SetupManager
+		"""
+		setups = {}
+
+		# Iterate through names of setups
+		for setup_name in data:
+
+			setup_data = data[setup_name]
+
+			# Iterate through names of objects in setups
+			setup_objs = []
+			for obj_name in setup_data:
+
+				# Extract necessary data
+				obj_data = setup_data[obj_name]
+				color_data = obj_data[SetupManagerFactory.COLOR]
+				position_data = obj_data[SetupManagerFactory.POSITION]
+				descriptor_data = obj_data[SetupManagerFactory.DESCRIPTOR]
+				size_data = obj_data[SetupManagerFactory.SIZE]
+
+				# Setup builder
+				obj_builder.set_descriptor(descriptor_data)
+				obj_builder.set_position(position_data)
+				obj_builder.set_color(color_data)
+
+				# Create object
+				#setup_objs.append(obj_builder.create(obj_name, # TODO: Pickup here))
+
+			#new_setup = 
+
+		new_manager = experiment.SetupManager(setups)
+
+
 class VirtualObjectPositionFactoryConstructor:
 	"""
 	Factory singleton that creates VirtualObjectPositionFactory

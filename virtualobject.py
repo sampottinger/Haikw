@@ -575,21 +575,15 @@ class VirtualObjectBuilder:
 
 	NOT_SPECIFIED = None
 
-	def __init__(self, construction_strategy, named_size_resolver, color_resolution_strategy):
+	def __init__(self, construction_strategy):
 		"""
 		Creates a new VirtualObjectBuilder that leverages the given construction strategy
 		
 		@param construction_strategy: Package specific strategy for building virtual objects specific to the inverse kinematics software in use
 		@type: Subclass of VirtualObjectConstructionStrategy
-		@param named_size_resolver: Strategy for turning names into sizes for name - descriptor pairs
-		@type named_size_resolver: Subclass of NamedSizeResolver
-		@param color_resolution_strategy: A strategy for turning strings passed in for colors to VirtualObjectColor objects
-		@type color_resolution_strategy: Subclass of ColorResolutionStrategy
 		"""
 
 		self.__construction_strategy = construction_strategy
-		self.__named_size_resolver = named_size_resolver
-		self.__color_resolution_strategy = color_resolution_strategy
 		self.__descriptor = VirtualObjectBuilder.NOT_SPECIFIED
 		self.__color = VirtualObjectBuilder.NOT_SPECIFIED
 		self.__size = VirtualObjectBuilder.NOT_SPECIFIED
@@ -609,7 +603,7 @@ class VirtualObjectBuilder:
 		Sets the color of the next object and following objects to be created
 
 		@param new_color: The color to give to the next object and following objects to be created
-		@type new_color: String
+		@type new_color: VirtualObjectColor
 		"""
 
 		self.__color = new_color
@@ -647,20 +641,8 @@ class VirtualObjectBuilder:
 		if self.__size == VirtualObjectBuilder.NOT_SPECIFIED:
 			raise AttributeError("Size has not been set. Please call set_size and try again.")
 
-		# resolve color
-		if isinstance(self.__color, VirtualObjectColor):
-			color = self.__color
-		else:
-			color = self.__color_resolution_strategy.get_color(self.__color)
-
-		# resolve size
-		if isinstance(self.__size, VirtualObjectSize):
-			size = self.__size
-		else:
-			size = self.__named_size_resolver.get_size(self.__size)
-
 		# Create virtual object
-		new_obj = VirtualObject(name, position, self.__descriptor, color, size)
+		new_obj = VirtualObject(name, position, self.__descriptor, self.__color, self.__size)
 
 		# Add to sim
 		self.__construction_strategy.create_object(new_obj)

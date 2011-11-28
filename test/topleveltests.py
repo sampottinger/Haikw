@@ -49,10 +49,10 @@ class ToplevelTests(unittest.TestCase):
 		
 		# Create internal object builder
 		construction_strategy = dummy.DummyConstructionStrategy()
-		self.object_builder = virtualobject.VirtualObjectBuilder(construction_strategy, self.size_res_strategy, self.color_res_strategy)
+		self.object_builder = virtualobject.VirtualObjectBuilder(construction_strategy)
 
 		# Create external object builder
-		self.external_object_builder = manipulation.ExternalObjectBuilder(self.object_builder, self.object_resolver, self.position_factory)
+		self.external_object_builder = manipulation.ComplexObjectBuilder(self.object_builder, self.object_resolver, self.position_factory, self.color_res_strategy, self.size_res_strategy)
 
 		# Create test objects
 		self.external_object_builder.load_from_config("small_red_cube")
