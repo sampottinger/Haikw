@@ -8,7 +8,7 @@ Unit tests for the Haikw library
 """
 
 import unittest
-import manipulation
+import package
     
 class InitalizationSuite(unittest.TestCase):
     """ Test suite for initalization / setup mechanisms """
@@ -77,13 +77,13 @@ test:
 ...'''
     
     def setUp(self):
-        self.source_manager = manipulation.PackageManager("yaml", configuration=InitalizationSuite.TEST_SOURCE)
-        self.file_manager = manipulation.PackageManager("yaml", configuration_file=InitalizationSuite.TEST_FILE)
+        self.source_manager = package.PackageManager("yaml", configuration=InitalizationSuite.TEST_SOURCE)
+        self.file_manager = package.PackageManager("yaml", configuration_file=InitalizationSuite.TEST_FILE)
 
     def invalid_package_manager_init(self):
         """ Tests handeling of an invalid initalization of a package manager """
         with self.assertRaises(ValueError):
-            manipulation.PackageManager("yaml") # Need config file or config source
+            package.PackageManager("yaml") # Need config file or config source
 
     def color_source(self):
         """ Test package manager color initalization by sources """
