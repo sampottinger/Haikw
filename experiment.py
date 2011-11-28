@@ -6,6 +6,7 @@ Module containing classes related to the management of experimental setups and r
 @copyright: 2011
 @organization: Andrews Robotics Initiative at CU Boulder
 """
+import structures
 
 class RobotPart:
 	"""
@@ -21,7 +22,7 @@ class RobotPart:
 		"""
 		self.__name = name
 	
-	def get_name():
+	def get_name(self):
 		"""
 		Determine the name of this robot part
 
@@ -119,14 +120,11 @@ class SetupManager:
 	Manager specific to handeling virtual experimental setups
 	"""
 
-	def __init__(self, setups):
+	def __init__(self):
 		"""
 		Constructor for SetupManager
-
-		@param setups: List of available setups
-		@type setups: DictionarySet of String to Setup
 		"""
-		self.__setups = setups
+		self.__setups = structures.DictionarySet()
 	
 	def get(self, name):
 		"""
@@ -140,30 +138,26 @@ class SetupManager:
 		
 		return self.__setups[name]
 	
-	def add(self, name, setup):
+	def add(self, setup):
 		"""
 		Adds a new setup to the store of available setups
 
-		@param name: The name of the state to save
-		@type name: String
 		@param setup: The new setup to save
 		@type setup: Setup
 		"""
-		self.__setups[name] = setup
+		self.__setups[setup.get_name()] = setup
 
 class RobotManager:
 	"""
 	Manager specific to handling virtual robots
 	"""
 
-	def __init__(self, robots):
+	def __init__(self):
 		"""
 		Constructor for RobotManager
-
-		@param robots: A list of robots available to this system
 		"""
 		
-		self.__robots = robots
+		self.__robots = structures.DictionarySet()
 	
 	def get(self, name):
 		"""
@@ -178,3 +172,12 @@ class RobotManager:
 			raise ValueError("A robot by that name has not been reigstered")
 		
 		return self.__robots[name]
+	
+	def add(self, robot):
+		"""
+		Adds a new robot to this manager
+
+		@param robot: The new robot to save
+		@type robot: Robot
+		"""
+		self.__robots[robot.get_name()] = robot

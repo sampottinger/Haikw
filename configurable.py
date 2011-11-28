@@ -217,7 +217,7 @@ class SetupManagerFactory:
 		@param data: Dictionary containing a setup strategy of form {"setup_1":{"test_block":{"color":"red", "position":"origin", "size":"small", descriptor:"cube"}}}
 		@type data: Dict
 		@param obj_builder: Builder used to make virtual objects
-		@type obj_builder: VirtualObjectBuilder
+		@type obj_builder: ComplexObjectBuilder
 		@return: A new SetupManager cooresponding to provided dictionary
 		@rtype: SetupManager
 		"""
@@ -232,24 +232,40 @@ class SetupManagerFactory:
 			setup_objs = []
 			for obj_name in setup_data:
 
-				# Extract necessary data
+				# Get data to build object
 				obj_data = setup_data[obj_name]
-				color_data = obj_data[SetupManagerFactory.COLOR]
-				position_data = obj_data[SetupManagerFactory.POSITION]
-				descriptor_data = obj_data[SetupManagerFactory.DESCRIPTOR]
-				size_data = obj_data[SetupManagerFactory.SIZE]
 
-				# Setup builder
-				obj_builder.set_descriptor(descriptor_data)
-				obj_builder.set_position(position_data)
-				obj_builder.set_color(color_data)
+				# Setup builder by individual properties
+				if isinstance(objdata, dict):
 
-				# Create object
-				#setup_objs.append(obj_builder.create(obj_name, # TODO: Pickup here))
+					# Extract required data
+					color_data = obj_data[SetupManagerFactory.COLOR]
+					position_data = obj_data[SetupManagerFactory.POSITION]
+					descriptor_data = obj_data[SetupManagerFactory.DESCRIPTOR]
+					size_data = obj_data[SetupManagerFactory.SIZE]
 
-			#new_setup = 
+					# Setup builder
+					obj_builder.set_descriptor(descriptor_data)
+					obj_builder.set_position(position_data)
+					obj_builder.set_color(color_data)
+				
+				# Load by prototype
+				elif isinstance(objdata, str):
+
+					obj_builder.load_from_config(objdata)
+				
+				else:
+					raise TypeError("Expected string prototype name or dictionary describing object.")
+
+				new_obj = obj_builder.create(obj_name, position_data)
+
+				setup_objs.append(new_obj)
+
+			new_setup = experiment.Setup(setup_name, setup_objs)
+			setups[setup_name] = new_setup
 
 		new_manager = experiment.SetupManager(setups)
+		return new_manager
 
 
 class VirtualObjectPositionFactoryConstructor:

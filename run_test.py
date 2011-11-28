@@ -7,6 +7,7 @@ from test import loadertests
 from test import midleveltests
 from test import topleveltests
 from test import facadeconsttests
+from test import experimenttests
 
 full_suite = unittest.TestSuite()
 
@@ -38,6 +39,14 @@ virtual_object_suite.addTest(virtualstructtest.VirtualObjectSuite("color_test"))
 virtual_object_suite.addTest(virtualstructtest.VirtualObjectSuite("size_test"))
 virtual_object_suite.addTest(virtualstructtest.VirtualObjectSuite("object_resolution_test"))
 full_suite.addTest(virtual_object_suite)
+
+experiment_suite = unittest.TestSuite()
+experiment_suite.addTest(experimenttests.ExperimentTests("test_part"))
+experiment_suite.addTest(experimenttests.ExperimentTests("test_robot"))
+experiment_suite.addTest(experimenttests.ExperimentTests("test_setup"))
+experiment_suite.addTest(experimenttests.ExperimentTests("test_setup_manager"))
+experiment_suite.addTest(experimenttests.ExperimentTests("test_robot_manager"))
+full_suite.addTest(experiment_suite)
 
 config_suite = unittest.TestSuite()
 config_suite.addTest(configtests.ConfigTests("test_color_resolution"))
