@@ -11,6 +11,7 @@ import unittest
 import configurable
 import virtualobject
 import dummy
+import builders
 	
 class MidlevelTests(unittest.TestCase):
 	""" Test suite for "midlevel" management objects """
@@ -47,7 +48,7 @@ class MidlevelTests(unittest.TestCase):
 		
 		# Create object builder
 		construction_strategy = dummy.DummyConstructionStrategy()
-		self.object_builder = virtualobject.VirtualObjectBuilder(construction_strategy)
+		self.object_builder = builders.VirtualObjectBuilder(construction_strategy)
 
 		# Test small red cube
 		self.object_builder.set_descriptor("cube")
