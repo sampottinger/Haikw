@@ -21,3 +21,4 @@ Nice to haves:
 	- edit virtual objects as opposed to updating them (?)
 	- create object by just prefab name + position
 	- unify outward interface
+	- Unify builder interfaces

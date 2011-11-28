@@ -12,6 +12,7 @@ import configurable
 import virtualobject
 import dummy
 import builders
+import experiment
 	
 class MidlevelTests(unittest.TestCase):
 	""" Test suite for "midlevel" management objects """

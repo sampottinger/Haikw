@@ -27,6 +27,11 @@ class ToplevelTests(unittest.TestCase):
 		self.test_position_data = {"small_offset": {"x": 1, "y": 2, "z": 3}, "large_offset": {"x":4, "y":5, "z":6, "roll": 0.1, "pitch":0.2, "yaw": 0.3}}
 		self.prefab_data = {"small_red_cube": {"color": "red", "size":"small", "descriptor": "cube"},
 							"large_blue_sphere": {"color": "blue", "size": "large", "descriptor": "sphere"}}
+		self.test_setups_data = {"test_setup_1": {"red_block_1": {"descriptor": "cube", "color": "red", "size":"small", "position":"small_offset"}, "green_sphere_1":{"descriptor": "sphere", "color":"#00FF00", "size":"large", "position":"large_offset"} },
+								 "test_setup_2": {"odd_block_2": {"descriptor": "cube", "color": {"red": 100, "blue": 101, "green": 102}, "size": "small", "position":"large_offset"} },
+								 "test_setup_3": {"blue_sphere_3": {"descriptor": "sphere", "color": "blue", "size": [11, 12, 13], "position":"large_offset"} },
+								 "test_setup_4": {"red_sphere_4": {"descriptor": "sphere", "color": "red", "size": "small", "position": {"x":10, "y":11, "z":12, "roll":1, "pitch":2, "yaw":3}} },
+								 "test_setup_5": {"small_red_cube_5": {"prefab": "small_red_cube", "position": "small_offset"} } }
 
 		# Create sample strategy for color resolution
 		self.color_res_factory = configurable.ComplexColorResolutionFactory.get_instance()
@@ -53,7 +58,7 @@ class ToplevelTests(unittest.TestCase):
 		self.object_builder = builders.VirtualObjectBuilder(construction_strategy)
 
 		# Create external object builder
-		self.external_object_builder = builders.ComplexObjectBuilder(self.object_builder, self.object_resolver, self.position_factory, self.color_res_strategy, self.size_res_strategy)
+		self.external_object_builder = builders.ComplexObjectBuilder(self.object_builder, self.object_resolver, self.position_factory, self.size_res_strategy, self.color_res_strategy)
 
 		# Create test objects
 		self.external_object_builder.load_from_config("small_red_cube")
@@ -66,7 +71,12 @@ class ToplevelTests(unittest.TestCase):
 
 		# Create a manipulation facade without a factory
 		self.manual_facade = manipulation.ObjectManipulationFacade(self.object_builder, self.manual_manipulation_strategy, self.color_res_strategy, self.size_res_strategy, self.position_factory, None, None, self.object_resolver)
-	
+		
+		# Test setup manager
+		# TODO: This needs object_builder to be a complex object builder
+		self.setup_manager_factory = configurable.SetupManagerFactory.get_instance()
+		self.setup_manager = self.setup_manager_factory.create_setup_manager(self.test_setups_data, self.external_object_builder)
+
 	def test_external_builder_prototype_position(self):
 		""" Test the creation of object positions purely by prototype """
 
@@ -233,3 +243,118 @@ class ToplevelTests(unittest.TestCase):
 		self.manual_facade.add_object(self.small_red_cube)
 		self.manual_facade.put(self.small_red_cube, "large_offset")
 		# WARNING: dummy does not track objects. This could be used to verify put method and should be fixed in future revision on unit testing
+
+	def test_baseline(self):
+		""" Test everything but color in simple named resolution """
+		setup_2 = self.setup_manager.get("test_setup_2")
+
+		odd_block_2 = setup_2.get_objects()[0]
+
+		self.assertEqual(odd_block_2.get_name(), "odd_block_2")
+
+		self.assertEqual(odd_block_2.get_descriptor(), "cube")
+
+		small = odd_block_2.get_size()
+		self.assertEqual(small[0], self.test_size_data["small"][0])
+		self.assertEqual(small[1], self.test_size_data["small"][1])
+		self.assertEqual(small[2], self.test_size_data["small"][2])
+
+		large_offset = odd_block_2.get_position()
+		self.assertEqual(large_offset.get_x(), self.test_position_data["large_offset"]["x"])
+		self.assertEqual(large_offset.get_y(), self.test_position_data["large_offset"]["y"])
+		self.assertEqual(large_offset.get_z(), self.test_position_data["large_offset"]["z"])
+		self.assertEqual(large_offset.get_roll(), self.test_position_data["large_offset"]["roll"])
+		self.assertEqual(large_offset.get_pitch(), self.test_position_data["large_offset"]["pitch"])
+		self.assertEqual(large_offset.get_yaw(), self.test_position_data["large_offset"]["yaw"])
+	
+	def test_setup_multi(self):
+		""" Test experiment colors with multiple objects, one from prefab components and another with hex color """
+		setup_1 = self.setup_manager.get("test_setup_1")
+
+		setup_1_objs = setup_1.get_objects()
+
+		self.assertEqual(setup_1_objs[0].get_name(), "red_block_1")
+		self.assertEqual(setup_1_objs[1].get_name(), "green_sphere_1")
+
+		real_red = self.color_res_strategy.get_color("red")
+		test_red = setup_1_objs[0].get_color()
+		self.assertEqual(real_red.get_red(), test_red.get_red())
+		self.assertEqual(real_red.get_green(), test_red.get_green())
+		self.assertEqual(real_red.get_blue(), test_red.get_blue())
+
+		real_green = self.color_res_strategy.get_color("#00FF00")
+		test_green = setup_1_objs[1].get_color()
+		self.assertEqual(real_green.get_red(), test_green.get_red())
+		self.assertEqual(real_green.get_green(), test_green.get_green())
+		self.assertEqual(real_green.get_blue(), test_green.get_blue())
+
+	def test_setup_color_components(self):
+		""" Test experiment colors with an object with component color definition """
+		setup_2 = self.setup_manager.get("test_setup_2")
+
+		odd_block_2 = setup_2.get_objects()[0]
+
+		self.assertEqual(odd_block_2.get_name(), "odd_block_2")
+
+		real_odd = virtualobject.VirtualObjectColor(100, 102, 101)
+		test_odd = odd_block_2.get_color()
+		self.assertEqual(real_odd.get_red(), test_odd.get_red())
+		self.assertEqual(real_odd.get_green(), test_odd.get_green())
+		self.assertEqual(real_odd.get_blue(), test_odd.get_blue())
+	
+	def test_setup_size(self):
+		""" Test experiment size with an object with component size definition """
+		setup_3 = self.setup_manager.get("test_setup_3")
+
+		blue_sphere_3 = setup_3.get_objects()[0]
+
+		self.assertEqual(blue_sphere_3.get_name(), "blue_sphere_3")
+
+		test_size = blue_sphere_3.get_size()
+		self.assertEqual(test_size[0], 11)
+		self.assertEqual(test_size[1], 12)
+		self.assertEqual(test_size[2], 13)
+	
+	def test_setup_position(self):
+		""" Test experiment position with an object with component position definition """
+		setup_4 = self.setup_manager.get("test_setup_4")
+
+		red_sphere_4 = setup_4.get_objects()[0]
+
+		self.assertEqual(red_sphere_4.get_name(), "red_sphere_4")
+
+		test_position = red_sphere_4.get_position()
+		self.assertEqual(test_position.get_x(), 10)
+		self.assertEqual(test_position.get_y(), 11)
+		self.assertEqual(test_position.get_z(), 12)
+		self.assertEqual(test_position.get_roll(), 1)
+		self.assertEqual(test_position.get_pitch(), 2)
+		self.assertEqual(test_position.get_yaw(), 3)
+	
+	def test_setup_prefab(self):
+		""" Test experiment objects made from prefabrication """
+		setup_5 = self.setup_manager.get("test_setup_5")
+
+		small_red_cube_5 = setup_5.get_objects()[0]
+
+		self.assertEqual(small_red_cube_5.get_name(), "small_red_cube_5")
+
+		real_red = self.color_res_strategy.get_color("red")
+		test_red = small_red_cube_5.get_color()
+		self.assertEqual(real_red.get_red(), test_red.get_red())
+		self.assertEqual(real_red.get_green(), test_red.get_green())
+		self.assertEqual(real_red.get_blue(), test_red.get_blue())
+
+		self.assertEqual(small_red_cube_5.get_descriptor(), "cube")
+
+		small = small_red_cube_5.get_size()
+		self.assertEqual(small[0], self.test_size_data["small"][0])
+		self.assertEqual(small[1], self.test_size_data["small"][1])
+		self.assertEqual(small[2], self.test_size_data["small"][2])
+
+
+		small_offset = small_red_cube_5.get_position()
+		self.assertEqual(small_offset.get_x(), self.test_position_data["small_offset"]["x"])
+		self.assertEqual(small_offset.get_y(), self.test_position_data["small_offset"]["y"])
+		self.assertEqual(small_offset.get_z(), self.test_position_data["small_offset"]["z"])
+

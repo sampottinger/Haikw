@@ -7,6 +7,7 @@ Module containing classes for building VirtualObjects
 @organization: Andrews Robotics Initiative at CU Boulder
 """
 import virtualobject
+import state
 
 class VirtualObjectBuilder:
 	""" 
@@ -115,6 +116,8 @@ class ComplexObjectBuilder:
 		self.__object_builder = inner_builder
 		self.__object_strategy = object_strategy
 		self.__position_strategy = position_strategy
+		self.__named_size_resolver = named_size_resolver
+		self.__color_resolution_strategy = color_resolution_strategy
 
 	def set_new_descriptor(self, descriptor):
 		"""
@@ -136,7 +139,7 @@ class ComplexObjectBuilder:
 		"""
 		# resolve color
 		if not isinstance(color, virtualobject.VirtualObjectColor):
-			color = self.__color_resolution_strategy.get_color(self.__color)
+			color = self.__color_resolution_strategy.get_color(color)
 
 		self.__object_builder.set_color(color)
 	
@@ -149,7 +152,7 @@ class ComplexObjectBuilder:
 		"""
 		# resolve size
 		if not isinstance(size, virtualobject.VirtualObjectSize):
-			size = self.__named_size_resolver.get_size(self.__size)
+			size = self.__named_size_resolver.get_size(size)
 
 		self.__object_builder.set_size(size)
 	
@@ -185,7 +188,16 @@ class ComplexObjectBuilder:
 		# Resolve position
 		if isinstance(position, str):
 			position = self.__position_strategy.create_prefabricated(position)
-		elif not isinstance(position, VirtualObjectPosition):
+		elif isinstance(position, dict):
+			# TODO: We can clean this up a bit
+			x = position["x"]
+			y = position["y"]
+			z = position["z"]
+			roll = position["roll"]
+			pitch = position["pitch"]
+			yaw = position["yaw"]
+			position = state.VirtualObjectPosition(x, y, z, roll, pitch, yaw)
+		elif not isinstance(position, state.VirtualObjectPosition):
 			raise ValueError("Expected position to be a name of a prefabricated position or an instance of VirtualObjectPosition")
 		
 		# TODO: This makes me a bit uneasy

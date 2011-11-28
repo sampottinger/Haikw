@@ -10,6 +10,7 @@ Module containing factories driven by user provided configuration
 import re
 import virtualobject
 import state
+import experiment
 
 class ComplexColorResolutionFactory:
 	"""
@@ -193,6 +194,7 @@ class SetupManagerFactory:
 	POSITION = "position"
 	DESCRIPTOR = "descriptor"
 	SIZE = "size"
+	PREFAB = "prefab"
 
 	__instance = None
 
@@ -221,22 +223,25 @@ class SetupManagerFactory:
 		@return: A new SetupManager cooresponding to provided dictionary
 		@rtype: SetupManager
 		"""
-		setups = {}
+		manager = experiment.SetupManager()
 
 		# Iterate through names of setups
 		for setup_name in data:
 
 			setup_data = data[setup_name]
 
-			# Iterate through names of objects in setups
 			setup_objs = []
+
+			# Iterate through names of objects in setups
 			for obj_name in setup_data:
 
 				# Get data to build object
 				obj_data = setup_data[obj_name]
 
 				# Setup builder by individual properties
-				if isinstance(objdata, dict):
+				# TODO: This needs to be cleaned up
+				datakeys = obj_data.keys()
+				if len(datakeys) == 4:
 
 					# Extract required data
 					color_data = obj_data[SetupManagerFactory.COLOR]
@@ -245,27 +250,27 @@ class SetupManagerFactory:
 					size_data = obj_data[SetupManagerFactory.SIZE]
 
 					# Setup builder
-					obj_builder.set_descriptor(descriptor_data)
-					obj_builder.set_position(position_data)
-					obj_builder.set_color(color_data)
-				
-				# Load by prototype
-				elif isinstance(objdata, str):
+					obj_builder.set_new_descriptor(descriptor_data)
+					obj_builder.set_new_size(size_data)
+					obj_builder.set_new_color(color_data)
 
-					obj_builder.load_from_config(objdata)
-				
-				else:
-					raise TypeError("Expected string prototype name or dictionary describing object.")
+				elif len(datakeys) == 2:
 
+					# Extract required data
+					prefab_name = obj_data[SetupManagerFactory.PREFAB]
+					position_data = obj_data[SetupManagerFactory.POSITION]
+
+					# Setup builder
+					obj_builder.load_from_config(prefab_name)
+				
 				new_obj = obj_builder.create(obj_name, position_data)
 
 				setup_objs.append(new_obj)
 
 			new_setup = experiment.Setup(setup_name, setup_objs)
-			setups[setup_name] = new_setup
+			manager.add(new_setup)
 
-		new_manager = experiment.SetupManager(setups)
-		return new_manager
+		return manager
 
 
 class VirtualObjectPositionFactoryConstructor:
