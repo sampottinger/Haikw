@@ -1,20 +1,22 @@
 import virtualobject
 import experiment
 import manipulation
+import specialization
 
-class DummyConstructionStrategy(virtualobject.VirtualObjectConstructionStrategy):
+class DummyConstructionStrategy(specialization.VirtualObjectConstructionStrategy):
 	""" Virtual object construction strategy that does exactly nothing """
 
 	def __init__(self):
-		virtualobject.VirtualObjectConstructionStrategy.__init__(self)
+		specialization.VirtualObjectConstructionStrategy.__init__(self)
 	
 	def create_object(self, virtual_object):
 		pass
 
-class DummyManipulationStrategy(manipulation.VirtualObjectManipulationStrategy):
+class DummyManipulationStrategy(specialization.VirtualObjectManipulationStrategy):
 	""" Virtual object manipulation strategy for testing """
 
 	def __init__(self):
+		specialization.VirtualObjectManipulationStrategy.__init__(self)
 		self.default_affector = experiment.RobotPart("test_affector")
 		self.grabbed = None
 		self.facing = None

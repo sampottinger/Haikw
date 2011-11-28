@@ -151,36 +151,6 @@ class ObjectManipulationFactory:
 
 		return ObjectManipulationFacade(language, builder, manipulation_strategy, color_strategy, size_strategy, position_strategy, setup_manager, robot_manager, object_strategy)
 
-# TODO: Docs and exceptions
-class VirtualObjectManipulationStrategy:
-	"""
-	Fully abstract class / interface for stratgies for package specific manipulation and management tasks
-	"""
-
-	def __init__(self):
-		pass
-
-	def get_default_affector(self):
-		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
-
-	def refresh(self, target):
-		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
-	
-	def grab(self, target, affector):
-		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
-	
-	def face(self, position, affector):
-		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
-	
-	def update(self, target, position):
-		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
-	
-	def release(self, affector):
-		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
-	
-	def delete(self, target):
-		raise NotImplementedError("Must use implementor of this interface / fully abstract class")
-
 class ComplexObjectBuilder:
 	"""
 	User facing bridge component for the creation of virtual objects that can resolve components by config files

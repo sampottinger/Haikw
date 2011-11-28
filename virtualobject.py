@@ -156,26 +156,6 @@ class VirtualObjectColor:
 
 		return self.__b
 
-class VirtualObjectConstructionStrategy:
-	"""
-	Interface / fully abstract parent class for strategies for creating VirtualObjects
-
-	@note: It's a bit un-pythonic to do this but, given long term extendability concerns, this option was taken
-	"""
-
-	def __init__(self):
-		pass
-
-	def create_object(self, virtual_object):
-		"""
-		Creates a new object with the given properties
-
-		@param virtual_object: The new virtual_object to add to the inverse kinematics sim
-		@type virtual_object: VirtualObject
-		"""
-
-		raise NotImplementedError("Must use subclass / implementor of this interface")
-
 class ColorResolutionStrategy:
 	"""
 	Interface / fully abstract parent class for strategies for turning string names into colors
